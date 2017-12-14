@@ -2,6 +2,9 @@ import {Interval, Note} from './note.js';
 
 import {NoteGroup} from './timing.js';
 
+// A regular expression to detach a note name from a chord name.
+const NOTE_SPLIT_REGEX = /([a-gA-G]b*#*-?[0-9]+)(.*)/;
+
 /**
  * A ChordTemplate contains the intervals that make up a given chord. The chord
  * template can be applied to a base note to create a Chord.
@@ -78,6 +81,30 @@ export class NamedChordTemplate {
     /** @type {string} */
     this.suffix = suffix;
   }
+
+  /**
+   * Applies the template to generate a named chord.
+   * @param {!Note} baseNote The note to root the resulting named chord.
+   * @return {!NamedChord} The resulting named chord.
+   */
+  apply(baseNote) {
+    return new NamedChord(this.chordTemplate.apply(baseNote),
+        `${baseNote.note}${this.suffix}`);
+  }
+}
+
+/**
+ * A chord that has a name.
+ */
+export class NamedChord {
+  /**
+   * @param {!Chord} chord The chord.
+   * @param {string} name The name of the chord.
+   */
+  constructor(chord, name) {
+    this.chord = chord;
+    this.name = name;
+  }
 }
 
 /**
@@ -116,7 +143,7 @@ export class ContextualChordTemplate {
 
     return new ContextualChord(
         this.namedChordTemplate.chordTemplate.apply(baseNote),
-        `${baseNote.baseNote}${baseNoteAccidentals}` +
+        `${baseNote.noteLetter}${baseNoteAccidentals}` +
         `${this.namedChordTemplate.suffix}`,
         this.scale.apply(root),
     );
@@ -129,16 +156,13 @@ export class ContextualChordTemplate {
  */
 export class ContextualChord {
   /**
-   * @param {!Chord} chord The notes to play.
-   * @param {string} name The name of the chord.
+   * @param {!NamedChord} namedChord The chord and its name.
    * @param {!Chord} scale The scale of reasonable note intervals that are
    *     playable over the chord, including leading and passing tones.
    */
-  constructor(chord, name, scale) {
-    /** @type {!Chord} */
-    this.chord = chord;
-    /** @type {string} */
-    this.name = name;
+  constructor(namedChord, scale) {
+    /** @type {!NamedChord} */
+    this.namedChord = namedChord;
     /** @type {!Chord} */
     this.scale = scale;
   }
@@ -159,5 +183,57 @@ export class MelodicBar {
     this.contextualChord = contextualChord;
     /** @type {!NoteGroup} */
     this.noteGroup = noteGroup;
+  }
+}
+
+/**
+ * A dictionary that maps chord names to their templates and provides helper
+ * methods to turn string representations of chords into chords.
+ */
+export class ChordDictionary {
+  /**
+   * @param {!Array<!NamedChordTemplate>} namedChordTemplates
+   */
+  constructor(namedChordTemplates) {
+    /**
+     * The dictionary that maps chord names to named chord templates.
+     * @type {!Map<string, !NamedChordTemplate>}
+     */
+    this.chordDictionary = new Map();
+
+    // Populate the chord dictionary by iterating through each named chord
+    // template and adding the chord template's suffix in as a key.
+    for (const namedChordTemplate of namedChordTemplates) {
+      this.chordDictionary.set(namedChordTemplate.suffix, namedChordTemplate);
+    }
+  }
+
+  /**
+   * Retrieves a named chord template by suffix from the chord dictionary.
+   * @param {string} suffix The suffix for which to search the dictionary.
+   * @return {?NamedChordTemplate} The chord template for this suffix, or
+   *     undefined if none is found.
+   */
+  getChordTemplateBySuffix(suffix) {
+    return this.chordDictionary.get(suffix);
+  }
+
+  /**
+   * Retrieves a chord by name by searching for the suffix in the chord
+   * dictionary and applying the result to an extracted base note.
+   * @param {string} name The full name of the chord.
+   * @return {?NamedChord} The chord that results, or undefined if none is
+   *     found.
+   */
+  getChordByName(name) {
+    const match = NOTE_SPLIT_REGEX.exec(name);
+    if (match.length != 3) throw new Error('Invalid chord name.');
+
+    const note = new Note(match[1]);
+    const suffix = match[2];
+    const namedChordTemplate = this.getChordTemplateBySuffix(suffix);
+    if (namedChordTemplate == null) return undefined;
+
+    return namedChordTemplate.apply(note);
   }
 }

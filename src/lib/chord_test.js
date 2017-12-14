@@ -2,6 +2,7 @@ import {Chord, ChordTemplate, ContextualChord, ContextualChordTemplate, NamedCho
 import {Interval, Note} from './note.js';
 
 import test from 'ava';
+import {westernChordDictionary} from './western.js';
 
 test('Chord', (t) => {
   const chord = new Chord(new Note('C2'), new Note('E2'), new Note('G2'));
@@ -58,7 +59,7 @@ test('Contextual Chord', (t) => {
   t.is(contextualChord.scale.notes[4].note, 'B#5');
 });
 
-test('Contextual Chord Off Inter', (t) => {
+test('Contextual Chord Off Interval', (t) => {
   const template = new ContextualChordTemplate(
     Interval.P4(),
     new NamedChordTemplate(
@@ -92,4 +93,31 @@ test('Contextual Chord Off Inter', (t) => {
   t.is(contextualChord.scale.notes[2].note, 'G##4');
   t.is(contextualChord.scale.notes[3].note, 'A#5');
   t.is(contextualChord.scale.notes[4].note, 'B#5');
+});
+
+test('Get Chord By Name', (t) => {
+  const chord1 = westernChordDictionary.getChordByName('D5');
+  t.is(chord1.notes.length, 3);
+  t.is(chord1.notes[0].note, 'D5');
+  t.is(chord1.notes[1].note, 'F#5');
+  t.is(chord1.notes[2].note, 'A6');
+
+  const chord2 = westernChordDictionary.getChordByName('Bb-3maj7');
+  t.is(chord2.notes.length, 4);
+  t.is(chord2.notes[0].note, 'Bb-3');
+  t.is(chord2.notes[1].note, 'D-3');
+  t.is(chord2.notes[2].note, 'F-3');
+  t.is(chord2.notes[3].note, 'A-2');
+
+  const chord3 = westernChordDictionary.getChordByName('B###2aug');
+  t.is(chord3.notes.length, 3);
+  t.is(chord3.notes[0].note, 'B###2');
+  t.is(chord3.notes[1].note, 'D####2');
+  t.is(chord3.notes[2].note, 'F#####2');
+
+  const chord4 = westernChordDictionary.getChordByName('F21dim');
+  t.is(chord4.notes.length, 3);
+  t.is(chord4.notes[0].note, 'F21');
+  t.is(chord4.notes[1].note, 'Ab22');
+  t.is(chord4.notes[2].note, 'Cb22');
 });

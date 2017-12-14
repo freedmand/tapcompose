@@ -26,16 +26,16 @@ export class Note {
       throw new Error(INVALID_NOTE);
     }
 
-    // Extract the base note.
+    // Extract the note letter.
     /**
-     * The base note, in the range from 'A' to 'G' inclusive.
+     * The note letter, in the range from 'A' to 'G' inclusive.
      * @type {string}
      */
-    this.baseNote = note.charAt(0).toUpperCase();
-    if (this.baseNote.charCodeAt(0) < 'A'.charCodeAt(0) ||
-        this.baseNote.charCodeAt(0) > 'G'.charCodeAt(0)) {
+    this.noteLetter = note.charAt(0).toUpperCase();
+    if (this.noteLetter.charCodeAt(0) < 'A'.charCodeAt(0) ||
+        this.noteLetter.charCodeAt(0) > 'G'.charCodeAt(0)) {
       // Ensure it's a valid base note.
-      throw new Error('Invalid base note.');
+      throw new Error('Invalid note letter.');
     }
 
     // Extract the accidentals, as '#' or 'b' characters.
@@ -67,7 +67,7 @@ export class Note {
      */
     this.octave = parseInt(octaveString);
 
-    const letter = this.baseNote.charCodeAt(0) - 'A'.charCodeAt(0) - 3;
+    const letter = this.noteLetter.charCodeAt(0) - 'A'.charCodeAt(0) - 3;
     /**
      * The two-component of the note in 2,3-notation.
      * @type {number}
@@ -141,7 +141,7 @@ export class Note {
     const minRange = 'A'.charCodeAt(0);
     const maxRange = 'G'.charCodeAt(0);
     const range = maxRange - minRange + 1;
-    const offset = this.baseNote.charCodeAt(0) + steps - minRange;
+    const offset = this.noteLetter.charCodeAt(0) + steps - minRange;
     const octaveShift = Math.floor(offset / range);
     const note = String.fromCharCode(
         ((offset % range) + range) % range + minRange);
@@ -158,7 +158,7 @@ export class Note {
   accidentalShift(steps, maxShift = null) {
     const newAccidentals = this.accidentals + steps;
     if (maxShift != null && Math.abs(newAccidentals) > maxShift) return new Note(this.note);
-    return new Note(this.baseNote +
+    return new Note(this.noteLetter +
       (newAccidentals < 0 ? 'b'.repeat(-newAccidentals) : '#'.repeat(newAccidentals)) +
       this.octave);
   }
@@ -179,9 +179,9 @@ export class Note {
    * @return {string}
    */
   vexflowNoteName() {
-    const note = this.baseNote.toLowerCase();
+    const note = this.noteLetter.toLowerCase();
     const octaveDelta =
-        this.baseNote.charCodeAt(0) - 'C'.charCodeAt(0) >= 0 ? 1 : 0;
+        this.noteLetter.charCodeAt(0) - 'C'.charCodeAt(0) >= 0 ? 1 : 0;
     const accidental = this.accidentals > 0 ?
         '#'.repeat(this.accidentals) : 'b'.repeat(-this.accidentals);
     return `${note}${accidental}/${this.octave + octaveDelta}`;

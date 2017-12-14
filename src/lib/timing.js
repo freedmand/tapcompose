@@ -1,4 +1,5 @@
 import {Instrument} from './instrument.js';
+import {Note} from './note.js';
 
 // The number of decimal places to use in time-based keys.
 const PRECISION = 6;
@@ -282,6 +283,21 @@ export class TimedNote extends Event {
   }
 
   /**
+   * Creates a timed note from a string representation. See the toString()
+   * method for the format.
+   * @param {string} str The string representation of the timed note to
+   *     deserialize from.
+   * @return {!TimedNote}
+   */
+  static fromString(str) {
+    const [noteString, startString, endString] = str.split(',');
+    const note = new Note(noteString);
+    const start = parseFloat(startString);
+    const end = parseFloat(endString);
+    return new TimedNote(note, start, end);
+  }
+
+  /**
    * Returns a unique identifier to represent the start and end of the note in
    * micro-beats.
    * @return {string}
@@ -420,6 +436,37 @@ export class NoteGroup extends Group {
     for (const timedNote of this.iterate()) {
       yield timedNote.toString();
     }
+  }
+
+  /**
+   * Serializes the group of notes to string. This method does not preserve
+   * hierarchical relationships between groups and events, effectively
+   * flattening the representation.
+   * @return {string}
+   */
+  serialize() {
+    const noteStrings = [];
+    for (const timedNote of this.iterate()) {
+      noteStrings.push(timedNote.toString());
+    }
+    // Join all the string representations of the timed notes with a '|'
+    // character.
+    return noteStrings.join('|');
+  }
+
+  /**
+   * Deserializes a string into a group of notes. This method creates a flat
+   * note group of all the timed notes within the string representation. See the
+   * serialize() function for the format.
+   * @param {string} str The string representation to deserialize into a note
+   *     group.
+   * @return {!NoteGroup}
+   */
+  static deserialize(str) {
+    const noteStrings = str.split('|');
+    const timedNotes = noteStrings.map(
+        (noteString) => TimedNote.fromString(noteString));
+    return new NoteGroup(timedNotes);
   }
 
   /**

@@ -3,7 +3,7 @@
  * system.
  */
 
-import {ChordTemplate, ContextualChordTemplate, NamedChordTemplate} from './chord.js';
+import {ChordDictionary, ChordTemplate, ContextualChordTemplate, NamedChordTemplate} from './chord.js';
 
 import {Interval} from './note.js';
 
@@ -44,6 +44,11 @@ export const augmented = new NamedChordTemplate(
   new ChordTemplate(Interval.P1(), Interval.M3(), Interval.a5()),
   'aug',
 );
+
+// A dictionary of common western music chords.
+export const westernChordDictionary = new ChordDictionary([major, minor,
+    dominant7, minor7, major7, diminished, diminished7, halfDiminished7,
+    augmented]);
 
 // Named scales.
 export const majorScale = new ChordTemplate(

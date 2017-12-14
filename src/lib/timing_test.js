@@ -1,5 +1,6 @@
-import {FunctionEvent, Group, Scheduler, Timing} from './timing.js';
+import {FunctionEvent, Group, NoteGroup, Scheduler, TimedNote, Timing} from './timing.js';
 
+import {Note} from './note';
 import test from 'ava';
 
 const nullFn = () => {};
@@ -85,4 +86,40 @@ test('Group Nested Timing', (t) => {
   const events = Array.from(topGroup.iterate());
   t.is(events[0].beats, 0);
   t.is(events[1].beats, 16);
+});
+
+test('Serialize', (t) => {
+  const timedNote1 = new TimedNote(new Note('C2'), 0, 1);
+  const timedNote2 = new TimedNote(new Note('D#4'), 1.23, 4.6);
+  const timedNote3 = new TimedNote(new Note('Ebb-12'), 9.873, 10);
+  const noteGroup = new NoteGroup([timedNote1, timedNote2, timedNote3]);
+
+  t.is(noteGroup.serialize(), 'C2,0,1|D#4,1.23,4.6|Ebb-12,9.873,10');
+});
+
+test('Deserialize', (t) => {
+  const noteGroup =
+      NoteGroup.deserialize('C2,0,1|D#4,1.23,4.6|Ebb-12,9.873,10');
+
+  /** @type {!Array<!TimedNote>} */
+  const timedNotes = Array.from(noteGroup.iterate());
+  t.is(timedNotes.length, 3);
+
+  t.is(timedNotes[0].note.noteLetter, 'C');
+  t.is(timedNotes[0].note.accidentals, 0);
+  t.is(timedNotes[0].note.octave, 2);
+  t.is(timedNotes[0].start, 0);
+  t.is(timedNotes[0].end, 1);
+
+  t.is(timedNotes[1].note.noteLetter, 'D');
+  t.is(timedNotes[1].note.accidentals, 1);
+  t.is(timedNotes[1].note.octave, 4);
+  t.is(timedNotes[1].start, 1.23);
+  t.is(timedNotes[1].end, 4.6);
+
+  t.is(timedNotes[2].note.noteLetter, 'E');
+  t.is(timedNotes[2].note.accidentals, -2);
+  t.is(timedNotes[2].note.octave, -12);
+  t.is(timedNotes[2].start, 9.873);
+  t.is(timedNotes[2].end, 10);
 });

@@ -28,56 +28,56 @@ function assertJump(t, baseNote, interval, finalNote, reverse = false) {
 
 test('Simple', t => {
   const note = new Note('C4');
-  t.is(note.baseNote, 'C');
+  t.is(note.noteLetter, 'C');
   t.is(note.accidentals, 0);
   t.is(note.octave, 4);
 });
 
 test('Single Sharp', (t) => {
   const note = new Note('A#0');
-  t.is(note.baseNote, 'A');
+  t.is(note.noteLetter, 'A');
   t.is(note.accidentals, 1);
   t.is(note.octave, 0);
 });
 
 test('Multiple Sharps', (t) => {
   const note = new Note('A###0');
-  t.is(note.baseNote, 'A');
+  t.is(note.noteLetter, 'A');
   t.is(note.accidentals, 3);
   t.is(note.octave, 0);
 });
 
 test('Single Flat', (t) => {
   const note = new Note('Ab0');
-  t.is(note.baseNote, 'A');
+  t.is(note.noteLetter, 'A');
   t.is(note.accidentals, -1);
   t.is(note.octave, 0);
 });
 
 test('Multiple Flats', (t) => {
   const note = new Note('Abbb0');
-  t.is(note.baseNote, 'A');
+  t.is(note.noteLetter, 'A');
   t.is(note.accidentals, -3);
   t.is(note.octave, 0);
 });
 
 test('Lowercase', (t) => {
   const note = new Note('c4');
-  t.is(note.baseNote, 'C');
+  t.is(note.noteLetter, 'C');
   t.is(note.accidentals, 0);
   t.is(note.octave, 4);
 });
 
 test('Negative Octave', (t) => {
   const note = new Note('Gbb-4');
-  t.is(note.baseNote, 'G');
+  t.is(note.noteLetter, 'G');
   t.is(note.accidentals, -2);
   t.is(note.octave, -4);
 });
 
 test('Large Octave', (t) => {
   const note = new Note('E22');
-  t.is(note.baseNote, 'E');
+  t.is(note.noteLetter, 'E');
   t.is(note.accidentals, 0);
   t.is(note.octave, 22);
 });

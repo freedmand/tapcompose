@@ -1,4 +1,4 @@
-import {ContextualChord, MelodicBar} from './chord.js';
+import {ChordDictionary, ContextualChord, MelodicBar} from './chord.js';
 import {NoteGroup, Scheduler} from './timing.js';
 import {RenderedMeasure, RenderedNote, ScoreRenderer} from './render.js';
 
@@ -129,6 +129,50 @@ export class InteractiveNote {
    */
   opacity(opacity) {
     this.renderedNote.staveNote.attrs.el.setAttribute('opacity', opacity);
+  }
+}
+
+/**
+ * A score contains notes and named chords.
+ */
+export class Score {
+  /**
+   * @param {!NoteGroup} noteGroup The group of notes in the score.
+   * @param {!Array<!NamedChord>} namedChords The named chords in this score.
+   */
+  constructor(noteGroup, namedChords) {
+    /** @type {!NoteGroup} */
+    this.noteGroup = noteGroup;
+    /** @type {!Array<!NamedChord>} */
+    this.namedChords = namedChords;
+  }
+
+  /**
+   * Serializes the score to a string.
+   * @return {string}
+   */
+  serialize() {
+    const chordsString = this.namedChords.forEach((namedChord) => {
+      return namedChord.name;
+    }).join(',');
+    const notesString = this.noteGroup.serialize();
+    return `${chordsString}-${notesString}`;
+  }
+
+  /**
+   * Deserializes the string into a score. See serialize() for the format.
+   * @param {string} str The string representation of the score.
+   * @param {!ChordDictionary} chordDictionary The chord dictionary to use to
+   *     deserialize chord names.
+   * @return {!Score} The deserialized score.
+   */
+  deserialize(str, chordDictionary) {
+    const [chordsString, notesString] = str.split('-');
+    const chordNames = chordsString.split(',');
+    const namedChords = chordNames.map(
+        (chordName) => chordDictionary.getChordByName(name));
+    const noteGroup = NoteGroup.deserialize(notesString);
+    return new Score(noteGroup, namedChords);
   }
 }
 
