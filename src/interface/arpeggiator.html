@@ -1,0 +1,198 @@
+<div class="component">
+    <div>
+        <div class="style">{{arpeggios[styleIndex % arpeggios.length].name}}</div>
+        <div class="nav">
+            <div class="button" on:click="set({styleIndex: (styleIndex + arpeggios.length - 1) % arpeggios.length})">&lt;</div>
+            <div class="button" on:click="set({styleIndex: (styleIndex + 1) % arpeggios.length})">&gt;</div>
+        </div>
+    </div>
+    <div>
+      <span class="title">Preview</span>
+      <div class="button">M</div>
+      <div class="button">m</div>
+      <div class="button">M7</div>
+      <div class="button">m7</div>
+      <div class="button">dim7</div>
+    </div>
+    <div class="arpeggiator">
+      <table cellspacing="0" cellpadding="2">
+        {{#each arpeggios[styleIndex].arpeggio.slice().reverse() as row}}
+          <tr>
+            {{#each row[2] as cell}}
+              <td style="width:{{1 / row[2].length * 100}}%">
+                <div class="{{cell}}"></div>
+              </td>
+            {{/each}}
+          </tr>
+        {{/each}}
+      </table>
+    </div>
+</div>
+
+<script>
+  const OFF = 'off';
+  const ON = 'on';
+  const HOLD = 'hold';
+
+  const WATERFALL = [
+    [0, 0, [ON  , HOLD, HOLD, HOLD, HOLD, HOLD, HOLD, HOLD]],
+    [1, 0, [OFF , ON  , OFF , ON  , OFF , OFF , OFF , ON  ]],
+    [2, 0, [OFF , OFF , ON  , OFF , ON  , OFF , ON  , OFF ]],
+    [3, 0, [OFF , OFF , OFF , OFF , OFF , ON  , OFF , OFF ]],
+  ];
+
+  const PERSISTENCE = [
+    [0, -1, [ON  , OFF , ON  , OFF , ON  , OFF , ON  , OFF ]],
+    [0,  0, [ON  , OFF , ON  , OFF , ON  , OFF , ON  , OFF ]],
+    [1,  0, [ON  , OFF , ON  , OFF , ON  , OFF , ON  , OFF ]],
+    [2,  0, [ON  , OFF , ON  , OFF , ON  , OFF , ON  , OFF ]],
+    [3,  0, [ON  , OFF , ON  , OFF , ON  , OFF , ON  , OFF ]],
+  ];
+
+  const KLEZ = [
+    [0, -1, [ON  , HOLD, OFF , OFF , ON  , HOLD, OFF , OFF , ON  , HOLD, OFF , OFF , ON  , HOLD, OFF , OFF ]],
+    [0,  0, [OFF , OFF , ON  , ON  , OFF , OFF , ON  , HOLD, OFF , OFF , ON  , HOLD, OFF , OFF , ON  , HOLD]],
+    [1,  0, [OFF , OFF , ON  , ON  , OFF , OFF , ON  , HOLD, OFF , OFF , ON  , HOLD, OFF , OFF , ON  , HOLD]],
+    [2,  0, [OFF , OFF , ON  , ON  , OFF , OFF , ON  , HOLD, OFF , OFF , ON  , HOLD, OFF , OFF , ON  , HOLD]],
+    [3,  0, [OFF , OFF , ON  , ON  , OFF , OFF , ON  , HOLD, OFF , OFF , ON  , HOLD, OFF , OFF , ON  , HOLD]],
+  ];
+
+  const TWINKLE = [
+    [0, -1, [ON  , HOLD, HOLD, HOLD, HOLD, HOLD, HOLD, HOLD]],
+    [2, -1, [ON  , OFF , ON  , OFF , ON  , OFF , ON  , OFF ]],
+    [1,  0, [OFF , ON  , OFF , ON  , OFF , ON  , OFF , ON  ]],
+    [0,  1, [ON  , HOLD, HOLD, HOLD, HOLD, HOLD, HOLD, HOLD]],
+  ];
+
+  const RAPID = [
+    [0, -1, [ON  , HOLD, HOLD, HOLD, ON  , HOLD, HOLD, HOLD]],
+    [0,  0, [ON  , ON  , OFF , ON  , ON  , ON  , OFF , ON ]],
+    [1,  0, [ON  , OFF , ON  , OFF , ON  , OFF , ON  , OFF]],
+    [2,  0, [ON  , ON  , OFF , ON  , ON  , ON  , OFF , ON ]],
+    [3,  0, [ON  , OFF , ON  , OFF , ON  , OFF , ON  , OFF]],
+  ];
+
+  const arpeggios = [
+    {
+      name: 'Waterfall',
+      arpeggio: WATERFALL,
+      beatsPerStep: 0.5,
+    },
+    {
+      name: 'Klez',
+      arpeggio: KLEZ,
+      beatsPerStep: 0.5,
+    },
+    {
+      name: 'Persistence',
+      arpeggio: PERSISTENCE,
+      beatsPerStep: 0.5,
+    },
+    {
+      name: 'Twinkle',
+      arpeggio: TWINKLE,
+      beatsPerStep: 0.5,
+    },
+    {
+      name: 'Rapid',
+      arpeggio: RAPID,
+      beatsPerStep: 0.5,
+    }
+  ];
+
+  export default {
+    data () {
+      return {
+        styleIndex: 0,
+        arpeggios,
+        ON, OFF, HOLD,
+      };
+    },
+  };
+</script>
+
+<style>
+
+  .arpeggiator {
+    margin: 0.5em 0;
+  }
+
+  .on {
+    background: #ffffffd4;
+    margin: 1px;
+  }
+  .off {
+    background: #dcdcdc0f;
+    margin: 1px;
+  }
+  .hold {
+    background: #ffffff6e;
+    margin: 1px;
+    margin-left: -5px;
+  }
+
+  .title {
+    padding: 0 0.5em;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    font-weight: bold;
+    vertical-align: middle;
+    color: #4764de;
+  }
+
+  table {
+    width: 100%;
+  }
+
+  td {
+    height: 15px;
+  }
+
+  td div {
+    height: 100%;
+  }
+
+  .component {
+    width: 300px;
+    border: solid 1px blue;
+    margin: 0px auto;
+    background: #071d77;
+    border-radius: 5px;
+    box-shadow: 0 0 2px #4043ad;
+    padding: 0.5em;
+  }
+
+  .button {
+    display: inline-block;
+    margin: 0.1em;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0em 0.4em;
+    background: #0000004f;
+    border: none;
+    color: #4764dd;
+    user-select: none;
+  }
+
+  .nav {
+    display: inline-block;
+    width: 63px;
+    text-align: right;
+  }
+
+  .button:hover {
+    background: #000000a8;
+  }
+
+  .style {
+    font-family: monospace;
+    color: #4765de;
+    background: #00000066;
+    font-size: 1.3em;
+    margin: 0em 0.1em 0.3em 0.1em;
+    padding: 0.1em 0.4em;
+    border-radius: 2px;
+    width: 200px;
+    display: inline-block;
+  }
+</style>

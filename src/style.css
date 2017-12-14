@@ -1,0 +1,29 @@
+.header {
+  padding: 1em 3em;
+}
+
+h1 {
+  font-weight: normal;
+}
+
+.score {
+  padding: 1em 2.5em;
+  background: linear-gradient(45deg, white, rgb(231, 231, 231));;
+}
+
+.footer {
+  color: #C3BA56;
+}
+
+html, body {
+  background: #1A1A1A;
+  margin: 0;
+  padding: 0;
+  color: #C3BA56;
+  font-family: 'Rubik', sans-serif;
+}
+
+.bottom {
+  padding: 3em;
+  color: white;
+}
