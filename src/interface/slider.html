@@ -1,0 +1,79 @@
+<div class="slider" on:smear="slide(event)" ref:slider>
+  <div class="knob" style="left: {{value * 100}}%"></div>
+</div>
+
+<script>
+  export default {
+    data () {
+      return {
+        value: 0.5,
+      }
+    },
+    events: {
+      smear(node, callback) {
+        let mousePressed = false;
+        function onMouseDown(event) {
+          mousePressed = true;
+          callback(event);
+        }
+        function onMouseMove(event) {
+          if (mousePressed) callback(event);
+        }
+        function onDocumentMouseUp(event) {
+          mousePressed = false;
+        }
+
+        node.addEventListener('mousedown', onMouseDown, false);
+        node.addEventListener('touchstart', onMouseDown, false);
+
+        node.addEventListener('mousemove', onMouseMove, false);
+        node.addEventListener('touchmove', onMouseMove, false);
+
+        document.body.addEventListener('mouseup', onDocumentMouseUp, false);
+        document.body.addEventListener('touchend', onDocumentMouseUp, false);
+
+        return {
+          teardown () {
+            node.removeEventListener('mousedown', onMouseDown, false);
+            node.removeEventListener('touchstart', onMouseDown, false);
+
+            node.removeEventListener('mousemove', onMouseMove, false);
+            node.removeEventListener('touchmove', onMouseMove, false);
+
+            document.body.removeEventListener(
+                'mouseup', onDocumentMouseUp, false);
+            document.body.removeEventListener(
+                'touchend', onDocumentMouseUp, false);
+          }
+        };
+      },
+    },
+    methods: {
+      slide(e) {
+        const x = e.pageX != null ? e.pageX : e.targetTouches[0].pageX;
+        this.set({value: (x - this.refs.slider.offsetLeft) /
+            this.refs.slider.offsetWidth});
+      }
+    },
+  }
+</script>
+
+<style>
+  .slider {
+    margin: 1em;
+    width: 500px;
+    background: white;
+    position: relative;
+    height: 10px;
+  }
+
+  .knob {
+    display: inline-block;
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    background: Red;
+    border-radius: 5px;
+  }
+</style>

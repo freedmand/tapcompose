@@ -145,21 +145,21 @@ export class Scheduler {
     this.schedule.addGroup(new Group(groupOrEvent, beatOffset));
   }
 
-  addTimedNotes(timedNotes, staveNote, polyInstrument) {
-    if (timedNotes.length == 0) return;
-    const groups = new Group(
-        timedNotes.map((timedNote) => timedNote.toGroup(polyInstrument)));
-    const start = timedNotes[0].start;
-    const end = timedNotes[0].end;
+  // addTimedNotes(timedNotes, staveNote, polyInstrument) {
+  //   if (timedNotes.length == 0) return;
+  //   const groups = new Group(
+  //       timedNotes.map((timedNote) => timedNote.toGroup(polyInstrument)));
+  //   const start = timedNotes[0].start;
+  //   const end = timedNotes[0].end;
 
-    staveNote.setClickPlayback(new Group(
-      timedNotes.map((timedNote) => timedNote.toGroup(polyInstrument, true))),
-      this.timing, polyInstrument);
+  //   staveNote.setClickPlayback(new Group(
+  //     timedNotes.map((timedNote) => timedNote.toGroup(polyInstrument, true))),
+  //     this.timing, polyInstrument);
 
-    groups.addEvent(new FunctionEvent(() => staveNote.showPlaying(), start));
-    groups.addEvent(new FunctionEvent(() => staveNote.showNormal(), end));
-    this.schedule.addGroup(new Group(groups));
-  }
+  //   groups.addEvent(new FunctionEvent(() => staveNote.showPlaying(), start));
+  //   groups.addEvent(new FunctionEvent(() => staveNote.showNormal(), end));
+  //   this.schedule.addGroup(new Group(groups));
+  // }
 
   initialize() {
     this.clearTimers();
@@ -473,28 +473,46 @@ export class NoteGroup extends Group {
    * Converts the group of notes into a group of timed onsets and offsets for an
    * instrument.
    * @param {!Instrument} instrument The instrument to play.
+   * @param {boolean=} shiftStart If true, shifts the start so the earliest note
+   *     happens at time 0.
+   * @param {string=} uniqueHandle The unique handle prefix to pass to the
+   *     instrument's noteOn and noteOff events.
    * @param {number=} offDelta The delta offset to release notes before the
    *     scheduled end in beats.
    * @param {number=} volume The volume at which to play each note.
-   * @param {string=} uniqueHandle The unique handle prefix to pass to the
-   *     instrument's noteOn and noteOff events.
    * @return {!Group} The resulting group of note onset and offset events for
    *     the instrument.
    */
-  toPerformanceGroup(instrument, offDelta = 0.1, volume = 0.2,
-      uniqueHandle = '') {
+  toPerformanceGroup(instrument, shiftStart = false, uniqueHandle = '',
+      offDelta = 0.1, volume = 0.2) {
     const performanceGroup = new Group();
+    let startDelta = 0;
+
+    // Set the startDelta if shiftStart is true.
+    if (shiftStart) {
+      // Find the earliest start.
+      let minStart = null;
+      for (const timedNote of this.iterate()) {
+        if (minStart == null || timedNote.start < minStart) {
+          minStart = timedNote.start;
+        }
+      }
+      if (minStart != null) startDelta = minStart;
+    }
+
     for (const timedNote of this.iterate()) {
       const handle = `${uniqueHandle}${timedNote.note.note}`;
       // Add the note onset event.
       performanceGroup.addEvent(new FunctionEvent(() => {
         instrument.noteOn(handle, timedNote.note.wellTemperedFrequency(),
             volume);
-      }, timedNote.start));
+      }, timedNote.start - startDelta));
       // Add the note offset event.
       performanceGroup.addEvent(new FunctionEvent(() => {
         instrument.noteOff(handle);
-      }, timedNote.end - offDelta));
+      }, timedNote.end - offDelta - startDelta));
     }
+
+    return performanceGroup;
   }
 }
