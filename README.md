@@ -1,6 +1,7 @@
 # tapcompose
 
-This is the source code for [tapcompose](https://tapcompose.com). It lives at https://github.com/freedmand/tapcompose.
+This is the source code for [tapcompose](https://www.tapcompose.com). It lives
+at https://github.com/freedmand/tapcompose.
 
 ## Get started
 

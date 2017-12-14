@@ -7,15 +7,10 @@ import {Formatter} from '../third_party/vexflow/formatter.js';
 import {Instrument} from './instrument.js';
 import {Modifier} from '../third_party/vexflow/modifier.js';
 import {Renderer} from '../third_party/vexflow/renderer.js';
+import {SUGGESTED} from './score.js';
 import {Stave} from '../third_party/vexflow/stave.js';
 import {StaveNote} from '../third_party/vexflow/stavenote.js';
 import {Voice} from '../third_party/vexflow/voice.js';
-
-// Color stylings.
-export const PLAYING = '#efa303';
-export const NORMAL = '#000';
-export const SELECTED = '#3f67ef';
-export const SUGGESTED = '#ccc';
 
 /**
  * RenderedNote links a Vexflow stave note, a note group, and optional beams
@@ -154,7 +149,7 @@ export class ScoreRenderer {
           const staveNote = this.toStaveNote(scoreObject, clef);
           staveNoteVoice.push(staveNote);
           const renderedNote = new RenderedNote(
-              scoreObject.staveNote, scoreObject.noteGroup);
+              staveNote, scoreObject.noteGroup);
           renderedNotes.push(renderedNote);
           barVoiceRenderedNotes.push(renderedNote);
         }
@@ -191,6 +186,7 @@ export class ScoreRenderer {
    * @param {number=} clefWidth The width of the clef area of the first bar.
    * @param {number=} offsetX The x offset at which to render everything.
    * @param {number=} offsetY The y offset at which to render everything.
+   * @return {!Array<!RenderedMeasure>} The rendered measures.
    */
   render(noteGroup, chords, keySignature = 'C', clef = 'treble',
       timeSignature = '4/4',
@@ -221,6 +217,7 @@ export class ScoreRenderer {
 
       stave.setText(chord.name, Modifier.Position.BELOW, {
           fill: suggestedMeasure ? SUGGESTED : NORMAL, // style options
+          shift_y: 20,
       });
 
       // Add a clef and time signature to just the first bar.
@@ -228,6 +225,9 @@ export class ScoreRenderer {
 
       // Connect to the rendering context and draw.
       stave.setContext(context).draw();
+
+      // Apply accidentals automatically using the key signature.
+      Accidental.applyAccidentals(renderedMeasure.vfVoices, keySignature);
 
       if (suggestedMeasure) {
         // Set styles for voices and beams in the suggested measure.
@@ -239,9 +239,6 @@ export class ScoreRenderer {
         }
       }
 
-      // Apply accidentals automatically using the key signature.
-      Accidental.applyAccidentals(renderedMeasure.vfVoices, keySignature);
-
       // Format the voices to fit evenly within the stave.
       new Formatter().joinVoices(renderedMeasure.vfVoices).format(
           renderedMeasure.vfVoices, staveWidth);
@@ -250,5 +247,7 @@ export class ScoreRenderer {
       renderedMeasure.vfVoices.forEach((v) => v.draw(context, stave));
       renderedMeasure.beams.forEach((b) => b.setContext(context).draw());
     }
+
+    return renderedMeasures;
   }
 }

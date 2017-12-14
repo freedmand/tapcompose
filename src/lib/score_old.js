@@ -19,10 +19,10 @@ function sample(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
 
-const PLAYING = '#efa303';
-const NORMAL = '#000';
-const SELECTED = '#3f67ef';
-const SUGGESTED = '#ccc';
+export const PLAYING = '#efa303';
+export const NORMAL = '#000';
+export const SELECTED = '#3f67ef';
+export const SUGGESTED = '#ccc';
 
 /**
  * RenderedNote is a bridge between a note in notation form and the note in the

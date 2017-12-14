@@ -1,9 +1,15 @@
 import {ContextualChord, MelodicBar} from './chord.js';
 import {NoteGroup, Scheduler} from './timing.js';
+import {RenderedMeasure, RenderedNote, ScoreRenderer} from './render.js';
 
-import {ScoreRenderer} from './render.js';
 import {StaveNote} from '../third_party/vexflow/stavenote.js';
 import {Suggester} from './suggest.js';
+
+// Color stylings.
+export const PLAYING = '#efa303';
+export const NORMAL = '#000';
+export const SELECTED = '#3f67ef';
+export const SUGGESTED = '#ccc';
 
 /**
  * InteractiveNote links a stave note to a score and provides features related
@@ -12,25 +18,21 @@ import {Suggester} from './suggest.js';
 export class InteractiveNote {
   /**
    * @param {!Score} score The score to which this note belongs.
-   * @param {!StaveNote} staveNote The Vexflow StaveNote object that is used to
-   *     render this note.
-   * @param {!NoteGroup} noteGroup The underlying timed notes that are in this
-   *     note.
-   * @param {?RenderedNote=} leftNote The note immediately to the left of this
-   *     one.
-   * @param {?RenderedNote=} rightNote The note immediately to the right of this
-   *     one.
+   * @param {!RenderedNote} renderedNote The rendered note object that links the
+   *     Vexflow StaveNote object with the underlying timed notes.
+   * @param {?InteractiveNote=} leftNote The note immediately to the left of
+   *     this one, or null if none exists.
+   * @param {?InteractiveNote=} rightNote The note immediately to the right of
+   *     this one, or null if none exists.
    */
-  constructor(score, staveNote, noteGroup, leftNote = null, rightNote = null) {
+  constructor(score, renderedNote, leftNote = null, rightNote = null) {
     /** @type {!Score} */
     this.score = score;
-    /** @type {!StaveNote} */
-    this.staveNote = staveNote;
-    /** @type {!Array<!Note>} */
-    this.timedNotes = timedNotes;
-    /** @type {?RenderedNote} */
+    /** @type {!RenderedNote} */
+    this.renderedNote = renderedNote;
+    /** @type {?InteractiveNote} */
     this.leftNote = leftNote;
-    /** @type {?RenderedNote} */
+    /** @type {?InteractiveNote} */
     this.rightNote = rightNote;
 
     /**
@@ -53,6 +55,80 @@ export class InteractiveNote {
      * @type {boolean}
      */
     this.hovered = false;
+  }
+
+  /**
+   * Render the stave note according to the how the note is being interacted
+   * with in the UI.
+   */
+  render() {
+    if (this.selected) {
+      // If selected, fill the note as such and ignore everything else.
+      this.fill(SELECTED);
+      this.opacity(1);
+    } else {
+      if (this.playing) {
+        // If the note is playing, fill the note as such.
+        this.fill(PLAYING);
+      } else {
+        // Otherwise, check if the note is suggested.
+        if (this.suggested) {
+          this.fill(SUGGESTED, true);
+        } else {
+          this.fill(NORMAL);
+        }
+      }
+      // If the note is being hovered over, alter its opacity.
+      if (this.hovered) {
+        this.opacity(0.65);
+      } else {
+        this.opacity(1);
+      }
+    }
+  }
+
+  /**
+   * Paints the stave note the specified color.
+   * @param {string} color A valid CSS color.
+   * @param {boolean=} fillUnattachedLines If true, finds SVG path elements that
+   *     are not contained within a group and are after this element, painting
+   *     them the specified color. This is a hacky way of dealing with Vexflow
+   *     not providing drawing access to certain noteheads.
+   */
+  fill(color, fillUnattachedLines = false) {
+    // Grab the element.
+    const elem = this.renderedNote.staveNote.attrs.el;
+
+    // Grab each sub-element and put them in a list of elements to process.
+    const elems = Array.from(elem.getElementsByTagName('*'));
+
+    if (fillUnattachedLines) {
+      // Grab unattached path elements and add them to the list of elements.
+      let currentElem = elem.nextSibling;
+      while (true) {
+        // Iterate through each adjacent sibling looking for 'path' elements.
+        if (currentElem.tagName.toLowerCase() == 'path') {
+          elems.push(currentElem);
+        }
+        currentElem = currentElem.nextSibling;
+        if (currentElem == null) break;
+      }
+    }
+
+    elems.forEach((subEl) => {
+      // Iterate through each sub-element and color its fill and stroke,
+      // depending on which properties are already set.
+      if (subEl.getAttribute('fill')) subEl.setAttribute('fill', color);
+      if (subEl.getAttribute('stroke')) subEl.setAttribute('stroke', color);
+    });
+  }
+
+  /**
+   * Fades the stave note to the specified opacity.
+   * @param {number} opacity The CSS-style opacity specifier.
+   */
+  opacity(opacity) {
+    this.renderedNote.staveNote.attrs.el.setAttribute('opacity', opacity);
   }
 }
 
@@ -131,6 +207,29 @@ export class TapComposeScore {
     this.scoreRenderer.clear();
 
     // Render the score.
-    this.scoreRenderer.render(allNotes, allChords);
+    /** @type {!Array<!RenderedMeasure>} */
+    const renderedMeasures = this.scoreRenderer.render(allNotes, allChords);
+
+    const interactiveNotes = [];
+    for (let i = 0; i < renderedMeasures.length; i++) {
+      // Iterate through each measure and populate new interactive notes.
+      const renderedMeasure = renderedMeasures[i];
+      const suggestedMeasure = i == renderedMeasures.length - 1;
+
+      for (const renderedNote of renderedMeasure.renderedNotes) {
+        const interactiveNote = new InteractiveNote(this, renderedNote);
+        interactiveNotes.push(interactiveNote);
+        interactiveNote.suggested = suggestedMeasure;
+      }
+    }
+
+    // Link up left and right notes.
+    for (let i = 0; i < interactiveNotes.length; i++) {
+      if (i != 0) interactiveNotes[i].leftNote = interactiveNotes[i - 1];
+      if (i != interactiveNotes.length - 1) {
+        interactiveNotes[i].rightNote = interactiveNotes[i + 1];
+      }
+      interactiveNotes[i].render();
+    }
   }
 }
