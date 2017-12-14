@@ -11,7 +11,7 @@ import {ScoreRenderer} from './render.js';
 import {TapComposeScore} from './score.js';
 
 const app = new ArpeggiatorInterface({
-	target: document.getElementById('arpeggiator'),
+  target: document.getElementById('arpeggiator'),
 });
 
 // Set up an audio context and instrument.
@@ -34,4 +34,4 @@ const score = new TapComposeScore(scoreRenderer, scheduler, polyInstrument,
     suggester, westernChordDictionary, 'C2maj7,F2m7-E4,0,1|E4,1,2|G3,2,3|G3,3,4|A4,3,4|Ab4,4,4.5|Ab4,4.5,5|G3,5,7|A4,7,8');
 
 // const score = new Score().render(scheduler, polyInstrument, scoreElem, arpeggio, beatsPerStep);
-score.render(scheduler, polyInstrument, scoreElem, app);
+score.render();

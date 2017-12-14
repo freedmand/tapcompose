@@ -207,8 +207,8 @@ export class TapComposeScore {
     this.scheduler = scheduler;
     /** @type {!Instrument} */
     this.instrument = instrument;
-    /** @type {!Arpeggiator} */
-    this.arpeggiator = arpeggiator;
+    // /** @type {!Arpeggiator} */
+    // this.arpeggiator = arpeggiator;
     /** @type {!Suggester} */
     this.suggester = suggester;
     /** @type {!ChordDictionary} */
