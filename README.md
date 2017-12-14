@@ -24,11 +24,11 @@ your changes.
 
 ## Contributions
 
-tapcompose was conceived, coded, and designed by Dylan Freedman.
+tapcompose was conceived of, coded, and designed by Dylan Freedman.
 
 Contributors:
 
-* Ekta Patel helped prototype the interface.
+* Ekta Patel: helped prototype the interface
 
 tapcompose utilizes the following libraries:
 

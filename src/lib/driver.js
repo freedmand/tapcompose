@@ -2,12 +2,13 @@ import {BounceSynth, InstrumentManager, SawOscillator, SineFade} from './instrum
 import {Chord, ChordTemplate} from './chord';
 import {Event, Group, Scheduler, TimedNote, Timing} from './timing.js';
 import {Interval, Note} from './note.js';
-import {ScoreRenderer, TapComposeScore} from './score.js';
 import {durationTemplates, majorContext, majorScale, minorContext} from './western.js';
 
 import {Arpeggiator} from './arpeggiator.js';
 import ArpeggiatorInterface from '../interface/arpeggiator.html';
 import {BasicMelodyBarSuggester} from './suggest.js';
+import {ScoreRenderer} from './render.js';
+import {TapComposeScore} from './score.js';
 
 const app = new ArpeggiatorInterface({
 	target: document.getElementById('arpeggiator'),
@@ -26,7 +27,7 @@ const scoreElem = document.getElementById('score');
 
 const scoreRenderer = new ScoreRenderer(scoreElem);
 
-const suggester = new BasicMelodyBarSuggester(new Note('Eb4'), majorContext,
+const suggester = new BasicMelodyBarSuggester(new Note('G3'), majorContext,
     durationTemplates, -1);
 
 const score = new TapComposeScore(scoreRenderer, scheduler, polyInstrument,
