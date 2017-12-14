@@ -136,6 +136,7 @@ export class Voices {
   /**
    * @param {!NoteGroup} noteGroup The note group to turn into a series of
    *     voices.
+   * @return {!Voices}
    */
   static fromNoteGroup(noteGroup) {
     /**

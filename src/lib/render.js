@@ -1,3 +1,4 @@
+import {NORMAL, SUGGESTED} from './score.js';
 import {Notes, Voices} from './voices.js';
 
 import {Accidental} from '../third_party/vexflow/accidental.js';
@@ -7,7 +8,6 @@ import {Formatter} from '../third_party/vexflow/formatter.js';
 import {Instrument} from './instrument.js';
 import {Modifier} from '../third_party/vexflow/modifier.js';
 import {Renderer} from '../third_party/vexflow/renderer.js';
-import {SUGGESTED} from './score.js';
 import {Stave} from '../third_party/vexflow/stave.js';
 import {StaveNote} from '../third_party/vexflow/stavenote.js';
 import {Voice} from '../third_party/vexflow/voice.js';
@@ -215,7 +215,7 @@ export class ScoreRenderer {
         staveWidth + (i == 0 ? clefWidth : 0), // width
       );
 
-      stave.setText(chord.name, Modifier.Position.BELOW, {
+      stave.setText(chord.namedChord.name, Modifier.Position.BELOW, {
           fill: suggestedMeasure ? SUGGESTED : NORMAL, // style options
           shift_y: 20,
       });

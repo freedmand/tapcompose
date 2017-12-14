@@ -1,9 +1,10 @@
-import {ChordDictionary, ContextualChord, MelodicBar} from './chord.js';
+import {Chord, ChordDictionary, ContextualChord, MelodicBar} from './chord.js';
 import {NoteGroup, Scheduler} from './timing.js';
+import {Outcome, Suggester} from './suggest.js';
 import {RenderedMeasure, RenderedNote, ScoreRenderer} from './render.js';
 
 import {StaveNote} from '../third_party/vexflow/stavenote.js';
-import {Suggester} from './suggest.js';
+import {Voices} from './voices.js';
 
 // Color stylings.
 export const PLAYING = '#efa303';
@@ -105,13 +106,12 @@ export class InteractiveNote {
     if (fillUnattachedLines) {
       // Grab unattached path elements and add them to the list of elements.
       let currentElem = elem.nextSibling;
-      while (true) {
+      while (currentElem) {
         // Iterate through each adjacent sibling looking for 'path' elements.
         if (currentElem.tagName.toLowerCase() == 'path') {
           elems.push(currentElem);
         }
         currentElem = currentElem.nextSibling;
-        if (currentElem == null) break;
       }
     }
 
@@ -166,11 +166,11 @@ export class Score {
    *     deserialize chord names.
    * @return {!Score} The deserialized score.
    */
-  deserialize(str, chordDictionary) {
+  static deserialize(str, chordDictionary) {
     const [chordsString, notesString] = str.split('-');
     const chordNames = chordsString.split(',');
     const namedChords = chordNames.map(
-        (chordName) => chordDictionary.getChordByName(name));
+        (chordName) => chordDictionary.getChordByName(chordName));
     const noteGroup = NoteGroup.deserialize(notesString);
     return new Score(noteGroup, namedChords);
   }
@@ -194,8 +194,13 @@ export class TapComposeScore {
    *     the chords.
    * @param {!Suggester} suggester The suggester that returns entire melodic
    *     bars that will be used to generate new content.
+   * @param {!ChordDictionary} chordDictionary The chord dictionary to use to
+   *     deserialize scores.
+   * @param {?string=} serializedScore An optional string representation of a
+   *     score. If specified, deserialize and load in the saved score.
    */
-  constructor(scoreRenderer, scheduler, instrument, suggester) {
+  constructor(scoreRenderer, scheduler, instrument, suggester, chordDictionary,
+      serializedScore = null) {
     /** @type {!ScoreRenderer} */
     this.scoreRenderer = scoreRenderer;
     /** @type {!Scheduler} */
@@ -206,13 +211,58 @@ export class TapComposeScore {
     this.arpeggiator = arpeggiator;
     /** @type {!Suggester} */
     this.suggester = suggester;
+    /** @type {!ChordDictionary} */
+    this.chordDictionary = chordDictionary;
 
     /**
      * The number of measures that have been accepted.
      * @type {number}
      */
-    this.acceptedBars = 0;
-    this.shuffle();
+    this.acceptedBars = -1;
+
+    if (serializedScore != null) {
+      this.deserialize(serializedScore);
+    }
+    if (this.acceptedBars < 0) {
+      // Shuffle if its a new score.
+      this.shuffle();
+    }
+  }
+
+  /**
+   * Deserializes the specified string to populate the suggester's history.
+   * @param {string} str The string to deserialize.
+   */
+  deserialize(str) {
+    const score = Score.deserialize(str, this.chordDictionary);
+    const bars = Voices.fromNoteGroup(score.noteGroup).toProperVoices();
+
+    for (const bar of bars) {
+      // Go through each bar and extract all the notes.
+      const barNotes = new NoteGroup;
+      for (const barVoice of bar) {
+        for (const scoreObject of barVoice.scoreObjects) {
+          // Convert every score object into a note group.
+          barNotes.addGroup(scoreObject.noteGroup);
+        }
+      }
+      const namedChord = score.namedChords[this.suggester.history.length];
+      // Use an empty scale for the named chord.
+      // TODO(freedmand): Auto-locate the likely scale.
+      const contextualChord = new ContextualChord(namedChord, new Chord());
+
+      this.suggester.history.push(
+          Outcome.fixed(new MelodicBar(contextualChord, barNotes)));
+    }
+
+    // If no bars have been added to the history, nothing has effectively
+    // happened. Return prematurely.
+    if (this.suggester.history.length == 0) return;
+
+    // Set the suggester so the last bar is suggested.
+    this.suggester.acceptIndex = this.suggester.history.length - 1;
+    // Update the number of accepted bars.
+    this.acceptedBars = this.suggester.acceptIndex;
   }
 
   /**

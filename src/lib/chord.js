@@ -88,8 +88,13 @@ export class NamedChordTemplate {
    * @return {!NamedChord} The resulting named chord.
    */
   apply(baseNote) {
-    return new NamedChord(this.chordTemplate.apply(baseNote),
-        `${baseNote.note}${this.suffix}`);
+    const baseNoteAccidentals = baseNote.accidentals < 0 ?
+        'b'.repeat(-baseNote.accidentals) : '#'.repeat(baseNote.accidentals);
+
+    return new NamedChord(
+      this.chordTemplate.apply(baseNote),
+      `${baseNote.noteLetter}${baseNoteAccidentals}${this.suffix}`,
+    );
   }
 }
 
@@ -138,13 +143,8 @@ export class ContextualChordTemplate {
     // interval.
     const root = baseNote.jump(this.interval, true);
 
-    const baseNoteAccidentals = baseNote.accidentals < 0 ?
-        'b'.repeat(-baseNote.accidentals) : '#'.repeat(baseNote.accidentals);
-
     return new ContextualChord(
-        this.namedChordTemplate.chordTemplate.apply(baseNote),
-        `${baseNote.noteLetter}${baseNoteAccidentals}` +
-        `${this.namedChordTemplate.suffix}`,
+        this.namedChordTemplate.apply(baseNote),
         this.scale.apply(root),
     );
   }

@@ -101,18 +101,18 @@ test('Suggester Accept and Clear Suggestion', (t) => {
 test('Basic Chord Suggester C Major Scales', (t) => {
   const chordSuggester = new BasicChordSuggester(new Note('C4'), majorContext);
 
-  t.is(chordSuggester.contextualChords[0].name , 'C');
-  t.is(chordSuggester.contextualChords[1].name , 'Cmaj7');
-  t.is(chordSuggester.contextualChords[2].name , 'F');
-  t.is(chordSuggester.contextualChords[3].name , 'Fmaj7');
-  t.is(chordSuggester.contextualChords[4].name , 'G');
-  t.is(chordSuggester.contextualChords[5].name , 'G7');
-  t.is(chordSuggester.contextualChords[6].name , 'Dm');
-  t.is(chordSuggester.contextualChords[7].name , 'Dm7');
-  t.is(chordSuggester.contextualChords[8].name , 'Am');
-  t.is(chordSuggester.contextualChords[9].name , 'Am7');
-  t.is(chordSuggester.contextualChords[10].name, 'Em');
-  t.is(chordSuggester.contextualChords[11].name, 'Em7');
+  t.is(chordSuggester.contextualChords[0].namedChord.name , 'C');
+  t.is(chordSuggester.contextualChords[1].namedChord.name , 'Cmaj7');
+  t.is(chordSuggester.contextualChords[2].namedChord.name , 'F');
+  t.is(chordSuggester.contextualChords[3].namedChord.name , 'Fmaj7');
+  t.is(chordSuggester.contextualChords[4].namedChord.name , 'G');
+  t.is(chordSuggester.contextualChords[5].namedChord.name , 'G7');
+  t.is(chordSuggester.contextualChords[6].namedChord.name , 'Dm');
+  t.is(chordSuggester.contextualChords[7].namedChord.name , 'Dm7');
+  t.is(chordSuggester.contextualChords[8].namedChord.name , 'Am');
+  t.is(chordSuggester.contextualChords[9].namedChord.name , 'Am7');
+  t.is(chordSuggester.contextualChords[10].namedChord.name, 'Em');
+  t.is(chordSuggester.contextualChords[11].namedChord.name, 'Em7');
 
   const expectedScale = ['C4', 'D4', 'E4', 'F4', 'G4', 'A5', 'B5'];
   for (const contextualChord of chordSuggester.contextualChords) {
@@ -124,18 +124,18 @@ test('Basic Chord Suggester C Major Scales', (t) => {
 test('Basic Chord Suggester Eb Minor Scales', (t) => {
   const chordSuggester = new BasicChordSuggester(new Note('Eb2'), minorContext);
 
-  t.is(chordSuggester.contextualChords[0].name , 'Ebm');
-  t.is(chordSuggester.contextualChords[1].name , 'Ebm7');
-  t.is(chordSuggester.contextualChords[2].name , 'Abm');
-  t.is(chordSuggester.contextualChords[3].name , 'Abm7');
-  t.is(chordSuggester.contextualChords[4].name , 'Bb');
-  t.is(chordSuggester.contextualChords[5].name , 'Bb7');
-  t.is(chordSuggester.contextualChords[6].name , 'Fdim');
-  t.is(chordSuggester.contextualChords[7].name , 'Fm7b5');
-  t.is(chordSuggester.contextualChords[8].name , 'Cb');
-  t.is(chordSuggester.contextualChords[9].name , 'Cbmaj7');
-  t.is(chordSuggester.contextualChords[10].name, 'Gb');
-  t.is(chordSuggester.contextualChords[11].name, 'Gbmaj7');
+  t.is(chordSuggester.contextualChords[0].namedChord.name , 'Ebm');
+  t.is(chordSuggester.contextualChords[1].namedChord.name , 'Ebm7');
+  t.is(chordSuggester.contextualChords[2].namedChord.name , 'Abm');
+  t.is(chordSuggester.contextualChords[3].namedChord.name , 'Abm7');
+  t.is(chordSuggester.contextualChords[4].namedChord.name , 'Bb');
+  t.is(chordSuggester.contextualChords[5].namedChord.name , 'Bb7');
+  t.is(chordSuggester.contextualChords[6].namedChord.name , 'Fdim');
+  t.is(chordSuggester.contextualChords[7].namedChord.name , 'Fm7b5');
+  t.is(chordSuggester.contextualChords[8].namedChord.name , 'Cb');
+  t.is(chordSuggester.contextualChords[9].namedChord.name , 'Cbmaj7');
+  t.is(chordSuggester.contextualChords[10].namedChord.name, 'Gb');
+  t.is(chordSuggester.contextualChords[11].namedChord.name, 'Gbmaj7');
 
   const expectedNaturalScale = ['Eb2', 'F2', 'Gb2', 'Ab3', 'Bb3', 'Cb3', 'Db3'];
   const expectedHarmonicScale =

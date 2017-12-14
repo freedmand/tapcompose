@@ -42,13 +42,13 @@ test('Contextual Chord', (t) => {
   const contextualChord = template.apply(new Note('E#4'));
 
   // Check the chord is right.
-  t.is(contextualChord.chord.notes.length, 3);
-  t.is(contextualChord.chord.notes[0].note, 'E#4');
-  t.is(contextualChord.chord.notes[1].note, 'A#5');
-  t.is(contextualChord.chord.notes[2].note, 'B#5');
+  t.is(contextualChord.namedChord.chord.notes.length, 3);
+  t.is(contextualChord.namedChord.chord.notes[0].note, 'E#4');
+  t.is(contextualChord.namedChord.chord.notes[1].note, 'A#5');
+  t.is(contextualChord.namedChord.chord.notes[2].note, 'B#5');
 
   // Check the name is right.
-  t.is(contextualChord.name, 'E#sus4');
+  t.is(contextualChord.namedChord.name, 'E#sus4');
 
   // Check the scale is right.
   t.is(contextualChord.scale.notes.length, 5);
@@ -78,13 +78,13 @@ test('Contextual Chord Off Interval', (t) => {
   const contextualChord = template.apply(new Note('A#5'));
 
   // Check the chord is right.
-  t.is(contextualChord.chord.notes.length, 3);
-  t.is(contextualChord.chord.notes[0].note, 'A#5');
-  t.is(contextualChord.chord.notes[1].note, 'D#5');
-  t.is(contextualChord.chord.notes[2].note, 'E#5');
+  t.is(contextualChord.namedChord.chord.notes.length, 3);
+  t.is(contextualChord.namedChord.chord.notes[0].note, 'A#5');
+  t.is(contextualChord.namedChord.chord.notes[1].note, 'D#5');
+  t.is(contextualChord.namedChord.chord.notes[2].note, 'E#5');
 
   // Check the name is right.
-  t.is(contextualChord.name, 'A#sus4');
+  t.is(contextualChord.namedChord.name, 'A#sus4');
 
   // Check the scale is right.
   t.is(contextualChord.scale.notes.length, 5);
@@ -97,27 +97,31 @@ test('Contextual Chord Off Interval', (t) => {
 
 test('Get Chord By Name', (t) => {
   const chord1 = westernChordDictionary.getChordByName('D5');
-  t.is(chord1.notes.length, 3);
-  t.is(chord1.notes[0].note, 'D5');
-  t.is(chord1.notes[1].note, 'F#5');
-  t.is(chord1.notes[2].note, 'A6');
+  t.is(chord1.name, 'D');
+  t.is(chord1.chord.notes.length, 3);
+  t.is(chord1.chord.notes[0].note, 'D5');
+  t.is(chord1.chord.notes[1].note, 'F#5');
+  t.is(chord1.chord.notes[2].note, 'A6');
 
   const chord2 = westernChordDictionary.getChordByName('Bb-3maj7');
-  t.is(chord2.notes.length, 4);
-  t.is(chord2.notes[0].note, 'Bb-3');
-  t.is(chord2.notes[1].note, 'D-3');
-  t.is(chord2.notes[2].note, 'F-3');
-  t.is(chord2.notes[3].note, 'A-2');
+  t.is(chord2.name, 'Bbmaj7');
+  t.is(chord2.chord.notes.length, 4);
+  t.is(chord2.chord.notes[0].note, 'Bb-3');
+  t.is(chord2.chord.notes[1].note, 'D-3');
+  t.is(chord2.chord.notes[2].note, 'F-3');
+  t.is(chord2.chord.notes[3].note, 'A-2');
 
   const chord3 = westernChordDictionary.getChordByName('B###2aug');
-  t.is(chord3.notes.length, 3);
-  t.is(chord3.notes[0].note, 'B###2');
-  t.is(chord3.notes[1].note, 'D####2');
-  t.is(chord3.notes[2].note, 'F#####2');
+  t.is(chord3.name, 'B###aug');
+  t.is(chord3.chord.notes.length, 3);
+  t.is(chord3.chord.notes[0].note, 'B###2');
+  t.is(chord3.chord.notes[1].note, 'D####2');
+  t.is(chord3.chord.notes[2].note, 'F#####2');
 
   const chord4 = westernChordDictionary.getChordByName('F21dim');
-  t.is(chord4.notes.length, 3);
-  t.is(chord4.notes[0].note, 'F21');
-  t.is(chord4.notes[1].note, 'Ab22');
-  t.is(chord4.notes[2].note, 'Cb22');
+  t.is(chord4.name, 'Fdim');
+  t.is(chord4.chord.notes.length, 3);
+  t.is(chord4.chord.notes[0].note, 'F21');
+  t.is(chord4.chord.notes[1].note, 'Ab22');
+  t.is(chord4.chord.notes[2].note, 'Cb22');
 });
