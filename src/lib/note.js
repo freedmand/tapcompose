@@ -19,8 +19,10 @@ const a4_freq = 440;
 export class Note {
   /**
    * @param {string} note The full name of the note.
+   * @param {number} number The default octave for the note, if none is
+   *     specified.
    */
-  constructor(note) {
+  constructor(note, defaultOctave = 2) {
     // Parse the note.
     if (note.length < 1) {
       throw new Error(INVALID_NOTE);
@@ -57,10 +59,8 @@ export class Note {
     }
 
     // Extract the octave.
-    const octaveString = note.substring(i);
-    if (isNaN(octaveString)) {
-      throw new Error('Invalid octave component.');
-    }
+    let octaveString = note.substring(i);
+    if (isNaN(octaveString)) octaveString = '' + defaultOctave;
     /**
      * The octave number. Octaves increment going from 'G' to 'A'.
      * @type {number}

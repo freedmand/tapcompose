@@ -60,6 +60,9 @@ export const minorScale = new ChordTemplate(
 export const harmonicMinorScale = new ChordTemplate(
   Interval.P1(), Interval.M2(), Interval.m3(), Interval.P4(), Interval.P5(),
   Interval.m6(), Interval.M7());
+export const dominantScale = new ChordTemplate(
+  Interval.P1(), Interval.M2(), Interval.M3(), Interval.P4(), Interval.P5(),
+  Interval.M6(), Interval.m7());
 
 
 // Key signature contexts.
@@ -87,6 +90,27 @@ export const minorContext = [
                               harmonicMinorScale),
   new ContextualChordTemplate(Interval.P5(), dominant7      ,
                               harmonicMinorScale),
+  new ContextualChordTemplate(Interval.M2(), diminished     , minorScale),
+  new ContextualChordTemplate(Interval.M2(), halfDiminished7, minorScale),
+  new ContextualChordTemplate(Interval.m6(), major          , minorScale),
+  new ContextualChordTemplate(Interval.m6(), major7         , minorScale),
+  new ContextualChordTemplate(Interval.m3(), major          , minorScale),
+  new ContextualChordTemplate(Interval.m3(), major7         , minorScale),
+];
+
+export const extendedContext = [
+  new ContextualChordTemplate(Interval.P1(), minor          , minorScale),
+  new ContextualChordTemplate(Interval.P1(), minor7         , minorScale),
+  new ContextualChordTemplate(Interval.P1(), major          , dominantScale),
+  new ContextualChordTemplate(Interval.P1(), dominant7      , dominantScale),
+  new ContextualChordTemplate(Interval.P4(), minor          , minorScale),
+  new ContextualChordTemplate(Interval.P4(), minor7         , minorScale),
+  new ContextualChordTemplate(Interval.P5(), major          ,
+                              harmonicMinorScale),
+  new ContextualChordTemplate(Interval.P5(), dominant7      ,
+                              harmonicMinorScale),
+  new ContextualChordTemplate(Interval.P5(), minor          , minorScale),
+  new ContextualChordTemplate(Interval.P5(), minor7         , minorScale),
   new ContextualChordTemplate(Interval.M2(), diminished     , minorScale),
   new ContextualChordTemplate(Interval.M2(), halfDiminished7, minorScale),
   new ContextualChordTemplate(Interval.m6(), major          , minorScale),

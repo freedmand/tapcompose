@@ -1,20 +1,29 @@
 import {Chord, ChordDictionary, ContextualChord, MelodicBar} from './chord.js';
-import {NoteGroup, Scheduler} from './timing.js';
+import {Event, FunctionEvent, NoteGroup, Scheduler, TimedNote} from './timing.js';
 import {Outcome, Suggester} from './suggest.js';
 import {RenderedMeasure, RenderedNote, ScoreRenderer} from './render.js';
 
+import {Arpeggiator} from './arpeggiator.js';
+import ArpeggiatorInterface from '../interface/arpeggiator.html';
 import {Listenable} from './listenable.js';
 import {StaveNote} from '../third_party/vexflow/stavenote.js';
 import {Voices} from './voices.js';
 
 // Color stylings.
-export const PLAYING = '#efa303';
+export const PLAYING = '#C2ADED';
 export const NORMAL = '#000';
-export const SELECTED = '#3f67ef';
+export const SELECTED = '#4F1DB8';
 export const SUGGESTED = '#ccc';
+
+// The SVG namespace.
+const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // The maximum number of accidentals in any one direction on a rendered score.
 const MAX_ACCIDENTALS = 2;
+
+// The amount of delay in milliseconds before a subsequent tap/click on an
+// interactive note is considered.
+const DOUBLE_CLICK_THRESHOLD = 100;
 
 /**
  * InteractiveNote links a stave note to a score and provides features related
@@ -49,6 +58,23 @@ export class InteractiveNote extends Listenable {
     this.rightNote = rightNote;
 
     /**
+     * Grab the first note and set start and end time properties for
+     * convenience.
+     * @type {!TimedNote}
+     */
+    const firstNote = this.renderedNote.noteGroup.iterate().next().value;
+    /**
+     * The start time of this interactive note in beats.
+     * @type {number}
+     */
+    this.start = firstNote.start;
+    /**
+     * The end time of this interactive note in beats.
+     * @type {number}
+     */
+    this.end = firstNote.end;
+
+    /**
      * Whether the note is currently selected in the UI.
      * @type {boolean}
      */
@@ -76,6 +102,12 @@ export class InteractiveNote extends Listenable {
     this.element = this.renderedNote.staveNote.attrs.el;
 
     /**
+     * The x position of this element relative to the SVG element.
+     * @type {number}
+     */
+    this.x = this.element.getBBox().x;
+
+    /**
      * The scheduler for performing once off events, like click playback.
      * @type {!Scheduler}
      */
@@ -92,6 +124,22 @@ export class InteractiveNote extends Listenable {
         this.element, 'click', this.clickPlayback.bind(this));
     this.registerListener(
         this.element, 'touchstart', this.clickPlayback.bind(this));
+
+    this.initialize();
+
+    /**
+     * Prevents a click event from registering twice in rapid succession.
+     * @type {boolean}
+     */
+    this.preventDoubleClick = false;
+  }
+
+  /**
+   * Sets the cursor to turn into a pointer over all stave notes, indicating
+   * that they can be clicked on.
+   */
+  initialize() {
+    this.element.style.cursor = 'pointer';
   }
 
   /**
@@ -100,8 +148,8 @@ export class InteractiveNote extends Listenable {
    */
   select(play = false) {
     // Only update if not already selected.
+    if (play) this.playOnceOff(this.renderedNote.noteGroup);
     if (!this.selected) {
-      if (play) this.playOnceOff(this.renderedNote.noteGroup);
       this.selected = true;
       this.render();
     }
@@ -114,6 +162,28 @@ export class InteractiveNote extends Listenable {
     // Only update if not already deselected.
     if (this.selected) {
       this.selected = false;
+      this.render();
+    }
+  }
+
+  /**
+   * Sets this interactive note to the playing style (actual playback is
+   * controlled by the tap compose score).
+   */
+  play() {
+    if (!this.playing) {
+      this.playing = true;
+      this.render();
+    }
+  }
+
+  /**
+   * Sets this interactive note to stop the playing style (actual playback is
+   * controlled by the tap compose score).
+   */
+  stopPlaying() {
+    if (this.playing) {
+      this.playing = false;
       this.render();
     }
   }
@@ -150,10 +220,15 @@ export class InteractiveNote extends Listenable {
    * @param {!MouseEvent} e The mouse event.
    */
   clickPlayback(e) {
-    // Only run if the tap compose score is paused.
-    if (this.tapComposeScore.playing) return;
+    // Avoid rapid clicks in quick succession.
+    if (this.preventDoubleClick) return;
+    this.preventDoubleClick = true;
+    setTimeout(() => this.preventDoubleClick = false, DOUBLE_CLICK_THRESHOLD);
 
-    this.playOnceOff(this.renderedNote.noteGroup);
+    // Only play the once off if the tap compose score is paused.
+    if (!this.tapComposeScore.scheduler.playing) {
+      this.playOnceOff(this.renderedNote.noteGroup);
+    }
     this.tapComposeScore.select(this);
 
     e.stopPropagation();
@@ -169,7 +244,8 @@ export class InteractiveNote extends Listenable {
 
     // Create the performance group, add it to the once off scheduler, and play.
     const performanceGroup =
-        noteGroup.toPerformanceGroup(this.tapComposeScore.instrument, true);
+        noteGroup.toPerformanceGroup(
+        this.tapComposeScore.instrument, true, 'onceOff-');
     this.onceOffScheduler.add(performanceGroup);
     this.onceOffScheduler.initialize();
     this.onceOffScheduler.play();
@@ -284,7 +360,7 @@ export class Score {
    * @return {string}
    */
   serialize() {
-    const chordsString = this.namedChords.forEach((namedChord) => {
+    const chordsString = this.namedChords.map((namedChord) => {
       return namedChord.name;
     }).join(',');
     const notesString = this.noteGroup.serialize();
@@ -309,6 +385,81 @@ export class Score {
 }
 
 /**
+ * The playback cursor which moves fluidly over the SVG in response to playback.
+ */
+class Cursor {
+  /**
+   * @param {!TapComposeScore} tapComposeScore The tap compose score the cursor
+   *     will be placed in.
+   * @param {!Array<!InteractiveNote>} interactiveNotes The interactive notes
+   *     the cursor moves between.
+   * @param {number=} startingPosition The starting position of the cursor in
+   *     beats.
+   * @param {number=} width The width of the cursor in pixels.
+   */
+  constructor(tapComposeScore, interactiveNotes, startingPosition = 0,
+      width = 6) {
+    /** @type {!TapComposeScore} */
+    this.tapComposeScore = tapComposeScore;
+    /** @type {!Array<InteractiveNote>} */
+    this.interactiveNotes = interactiveNotes;
+    /** @type {number} */
+    this.width = width;
+
+    /**
+     * The SVG element that represents this cursor.
+     * @type {?Element}
+     */
+    this.rect = null;
+
+    this.initialize(startingPosition);
+  }
+
+  /**
+   * Draws the cursor.
+   * @param {number} position The starting position in beats.
+   */
+  initialize(position) {
+    // Create the cursor element.
+    this.rect = document.createElementNS(SVG_NS, 'rect');
+    this.rect.setAttributeNS(null, 'y', 0);
+    this.rect.setAttributeNS(null, 'width', 6);
+    this.rect.setAttributeNS(null, 'height', 300);
+    this.rect.setAttributeNS(null, 'class', 'cursor');
+
+    const svg =
+        this.tapComposeScore.scoreRenderer.scoreElem.querySelector('svg');
+    svg.appendChild(this.rect);
+
+    this.setPosition(position);
+  }
+
+  /**
+   * Sets the position of the cursor to the specified beat offset.
+   * @param {number} beatOffset The beat offset.
+   */
+  setPosition(beatOffset) {
+    for (const interactiveNote of this.interactiveNotes) {
+      if (beatOffset >= interactiveNote.start &&
+          beatOffset <= interactiveNote.end) {
+        // Found the interactive note. Set the position by first getting the x
+        // bounds.
+        const x1 = interactiveNote.x;
+        let x2 = interactiveNote.x;
+        if (interactiveNote.rightNote != null) x2 = interactiveNote.rightNote.x;
+
+        // Get the position percentage.
+        const position = (beatOffset - interactiveNote.start) /
+            (interactiveNote.end - interactiveNote.start);
+        // Get the coordinate and set it.
+        const finalX = x1 + position * (x2 - x1);
+        this.rect.setAttributeNS(null, 'x', finalX + this.width / 2);
+      }
+    }
+  }
+}
+
+/**
  * TapComposeScore represents a musical score, playback system, instrument,
  * arpeggiation pattern, and suggester that generates new melodies, rhythms, and
  * chords. The score always has one suggested measure at the end that can be
@@ -322,8 +473,8 @@ export class TapComposeScore extends Listenable {
    *     timing for this score.
    * @param {!Instrument} instrument The instrument that will be used for
    *     playback of this score.
-   * @param {!Arpeggiator} arpeggiator The arpeggiator that will be used to play
-   *     the chords.
+   * @param {!ArpeggiatorInterface} arpeggioApp The arpeggiator interface
+   *     that will be used to play the chords and can be dynamically swapped.
    * @param {!Suggester} suggester The suggester that returns entire melodic
    *     bars that will be used to generate new content.
    * @param {!ChordDictionary} chordDictionary The chord dictionary to use to
@@ -331,8 +482,8 @@ export class TapComposeScore extends Listenable {
    * @param {?string=} serializedScore An optional string representation of a
    *     score. If specified, deserialize and load in the saved score.
    */
-  constructor(scoreRenderer, scheduler, instrument, suggester, chordDictionary,
-      serializedScore = null) {
+  constructor(scoreRenderer, scheduler, instrument, arpeggioApp, suggester,
+      chordDictionary, serializedScore = null) {
     super();
 
     /** @type {!ScoreRenderer} */
@@ -341,8 +492,8 @@ export class TapComposeScore extends Listenable {
     this.scheduler = scheduler;
     /** @type {!Instrument} */
     this.instrument = instrument;
-    // /** @type {!Arpeggiator} */
-    // this.arpeggiator = arpeggiator;
+    /** @type {!ArpeggiatorInterface} */
+    this.arpeggioApp = arpeggioApp;
     /** @type {!Suggester} */
     this.suggester = suggester;
     /** @type {!ChordDictionary} */
@@ -366,6 +517,11 @@ export class TapComposeScore extends Listenable {
      * @type {?InteractiveNote}
      */
     this.selected = null;
+    /**
+     * The interactive note that is playing in the score, or null if none is.
+     * @type {?InteractiveNote}
+     */
+    this.playing = null;
 
     /**
      * The number of measures that have been accepted.
@@ -374,7 +530,11 @@ export class TapComposeScore extends Listenable {
     this.acceptedBars = -1;
 
     if (serializedScore != null) {
-      this.deserialize(serializedScore);
+      // try {
+        this.deserialize(serializedScore);
+      // } catch (_) {
+      //   console.error('Deserialization failed');
+      // }
     }
     if (this.acceptedBars < 0) {
       // Shuffle if its a new score.
@@ -406,6 +566,7 @@ export class TapComposeScore extends Listenable {
 
       this.suggester.history.push(
           Outcome.fixed(new MelodicBar(contextualChord, barNotes)));
+      this.suggester.currentBeat = (this.suggester.history.length - 1) * 4;
     }
 
     // If no bars have been added to the history, nothing has effectively
@@ -419,11 +580,30 @@ export class TapComposeScore extends Listenable {
   }
 
   /**
+   * Serializes the score into a string.
+   * @return {string}
+   */
+  serialize() {
+    // Grab the entire history from the suggester.
+    const outcomes = this.suggester.history;
+
+    // Extract notes and chords from the outcomes.
+    const bars = /** @type {!Array<!MelodicBar>} */ (
+        outcomes.map((outcome) => outcome.value));
+    const allNotes = new NoteGroup(bars.map((bar) => bar.noteGroup));
+    const allChords = bars.map((bar) => bar.contextualChord.namedChord);
+
+    return new Score(allNotes, allChords).serialize();
+  }
+
+  /**
    * Shuffles the current suggestion.
    */
   shuffle() {
     this.suggester.suggest();
     this.render();
+    this.setBeatOffset((this.acceptedBars + 1) * 4);
+    this.playScheduler();
   }
 
   /**
@@ -431,18 +611,30 @@ export class TapComposeScore extends Listenable {
    */
   accept() {
     this.suggester.accept();
+    this.acceptedBars++;
     this.shuffle();
+  }
+
+  /**
+   * Sets the scheduler's beat offset to the specified amount.
+   * @param {number} beatOffset The beat offset to set.
+   */
+  setBeatOffset(beatOffset) {
+    if (this.scheduler.playing) this.allOff();
+    this.scheduler.setBeatOffset(beatOffset);
   }
 
   /**
    * Selects the specified interactive note and deselects every other
    * interactive note.
-   * @param {!InteractiveNote} The interactive note to select.
+   * @param {!InteractiveNote} interactiveNote The interactive note to select.
    * @param {boolean=} play If true, plays the note as it is selected.
    */
   select(interactiveNote, play = false) {
     // Deselect the previously selected note.
     this.deselect();
+
+    this.setBeatOffset(interactiveNote.start);
 
     // Selects the specified interactive note.
     this.selected = interactiveNote;
@@ -455,8 +647,29 @@ export class TapComposeScore extends Listenable {
   deselect() {
     if (this.selected != null) {
       this.selected.deselect();
+      this.selected = null;
     }
-    this.selected = null;
+  }
+
+  /**
+   * Sets the specified interactive note to the desired playback option and
+   * stops playing every other interactive note.
+   * @param {!InteractiveNote} interactiveNote The interactive note to play.
+   * @param {boolean=} playback If true, sets the interactive note to playing.
+   *     If false, stops playing the interactive note (along with all the other
+   *     interactive notes).
+   */
+  play(interactiveNote, playback = true) {
+    if (this.playing != null) {
+      this.playing.stopPlaying();
+      this.playing = null;
+    }
+
+    if (playback) {
+      // Play the specified interactive note, if applicable.
+      this.playing = interactiveNote;
+      this.playing.play();
+    }
   }
 
   /**
@@ -487,6 +700,7 @@ export class TapComposeScore extends Listenable {
    */
   mutate(originalTimedNote, newNote) {
     for (const outcome of this.suggester.history) {
+      // Iterate through subgroups and events, and events.
       for (const subgroup of outcome.value.noteGroup.subgroups) {
         for (const timedNote of subgroup.events) {
           // Uncover the timed note within the suggester's history.
@@ -494,6 +708,14 @@ export class TapComposeScore extends Listenable {
             timedNote.note = newNote;
             return;
           }
+        }
+      }
+      // TODO(freedmand): Make cleaner.
+      for (const timedNote of outcome.value.noteGroup.events) {
+        // Uncover the timed note within the suggester's history.
+        if (timedNote.toString() == originalTimedNote.toString()) {
+          timedNote.note = newNote;
+          return;
         }
       }
     }
@@ -536,6 +758,27 @@ export class TapComposeScore extends Listenable {
   }
 
   /**
+   * Plays the scheduler, ensures everything is deselected.
+   */
+  playScheduler() {
+    this.deselect();
+    this.scheduler.play();
+  }
+
+  /**
+   * Stops the scheduler, stops the instrument, ensures everything is reset.
+   */
+  allOff() {
+    this.scheduler.pause();
+    this.instrument.allOff();
+    // Stop every interactive note.
+    for (const interactiveNote of this.interactiveNotes) {
+      interactiveNote.cancelOnceOff(false);
+    }
+    this.play(null, false);
+  }
+
+  /**
    * Responds to a keydown event.
    * @param {!KeyboardEvent} e The keyboard event object.
    */
@@ -551,6 +794,23 @@ export class TapComposeScore extends Listenable {
       if (this.selected != null) e.preventDefault();
 
       this.shiftSelected(e.code == 'ArrowDown' ? -1 : 1, e.shiftKey);
+      e.stopPropagation();
+    } else if (e.code == 'Enter') { // Shuffle
+      this.shuffle();
+    } else if (e.code == 'KeyA') { // Accept
+      this.accept();
+    } else if (e.code == 'KeyR') { // Play from beginning.
+      this.allOff();
+      this.scheduler.beatOffset = 0;
+      this.playScheduler();
+    } else if (e.code == 'Space') { // Play / resume.
+      if (!this.scheduler.playing) {
+        this.playScheduler();
+      } else {
+        this.scheduler.pause();
+        this.allOff();
+      }
+      e.preventDefault();
       e.stopPropagation();
     }
   }
@@ -573,6 +833,9 @@ export class TapComposeScore extends Listenable {
    *     index and restores that selection by index.
    */
   render(preserveSelected = false) {
+    const serialized = this.serialize();
+    location.hash = serialized.replace('#', '_');
+
     /**
      * If preserve selected is true, the index to restore after creating new
      * interactive notes.
@@ -617,6 +880,19 @@ export class TapComposeScore extends Listenable {
         const interactiveNote = new InteractiveNote(
             this, renderedNote, this.interactiveNotes.length);
         this.interactiveNotes.push(interactiveNote);
+
+        // Add the event to the scheduler.
+        const performanceGroup =
+            interactiveNote.renderedNote.noteGroup.toPerformanceGroup(
+            this.instrument);
+          performanceGroup.addEvent(new FunctionEvent(() => {
+            this.play(interactiveNote, true);
+          }, interactiveNote.start));
+          performanceGroup.addEvent(new FunctionEvent(() => {
+            this.play(interactiveNote, false);
+          }, interactiveNote.end));
+
+        this.scheduler.add(performanceGroup);
         interactiveNote.suggested = suggestedMeasure;
       }
     }
@@ -632,6 +908,49 @@ export class TapComposeScore extends Listenable {
       this.interactiveNotes[i].render();
     }
 
+    // Add arpeggios.
+    let arpeggioGroup = new NoteGroup();
+    arpeggioGroup.name = 'arpeggio';
+    // Make a callback function for every arpeggio change.
+    const arpeggioChange = () => {
+      this.allOff();
+      this.scheduler.pause();
+
+      // Remove the arpeggio group if present.
+      this.scheduler.schedule.removeGroupByName('arpeggio');
+      arpeggioGroup = new NoteGroup();
+      arpeggioGroup.name = 'arpeggio';
+
+      for (let i = 0; i < allChords.length; i++) {
+        // Grab arpeggio information from the arpeggio app.
+        const {arpeggio, beatsPerStep} =
+            this.arpeggioApp.get('arpeggios')[
+            this.arpeggioApp.get('styleIndex')];
+
+        // Add the chord into the arpeggiator and then into the arpeggio group.
+        const chord = allChords[i].namedChord.chord;
+        const arpeggioSubgroup = new Arpeggiator(arpeggio, chord, beatsPerStep,
+            i * 4, (i + 1) * 4).toNoteGroup().toPerformanceGroup(
+            this.instrument);
+        arpeggioSubgroup.setOffset(4 * i);
+        arpeggioGroup.addGroup(arpeggioSubgroup);
+      }
+      this.scheduler.add(arpeggioGroup);
+
+      // Initialize the scheduler.
+      this.scheduler.initialize();
+    }
+    this.arpeggioApp.observe('styleIndex', arpeggioChange);
+
+   // Create the cursor and link it to the beat callback.
+   const cursor = preserveSelected ?
+       new Cursor(this, this.interactiveNotes, // Cursor if preserving selected
+       this.interactiveNotes[selectedIndex].start) :
+       new Cursor(this, this.interactiveNotes); // Cursor otherwise
+   this.scheduler.setBeatOffsetCallback(
+       (beatOffset) => cursor.setPosition(beatOffset));
+
+    // Restore the selection if applicable.
     if (preserveSelected) {
       this.select(this.interactiveNotes[selectedIndex], true);
     }

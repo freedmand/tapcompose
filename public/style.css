@@ -1,5 +1,6 @@
 .header {
   padding: 1em 3em;
+  background: #4F1DB8;
 }
 
 h1 {
@@ -17,19 +18,79 @@ h1 {
   height: 200px;
 }
 
+.cursor {
+  fill: #4F1DB8;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
 .footer {
-  color: #C3BA56;
 }
 
 html, body {
-  background: #1A1A1A;
   margin: 0;
   padding: 0;
-  color: #C3BA56;
-  font-family: 'Rubik', sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  background: #e4e4f3;
 }
 
 .bottom {
   padding: 3em;
-  color: white;
+}
+
+
+.usage {
+  display: table;
+}
+
+.row {
+  display: table-row;
+}
+
+.key {
+  display: table-cell;
+  border: solid 1px;
+  padding: 0.1em 0.2em;
+  background: white;
+  border-radius: 2px;
+  box-shadow: 0 0 2px #00000047;
+}
+
+.value {
+  display: table-cell;
+  padding-left: 1em;
+  width: 322px;
+}
+
+h2 {
+  display: inline-block;
+  color: #4f1eb8;
+  margin-top: 0;
+  margin-bottom: -0.3em;
+}
+
+
+h3 {
+  color: #000000ad;
+  margin-bottom: 2em;
+}
+
+.info {
+  display: inline-block;
+}
+
+.arpeggiatorContainer {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.copyright {
+  margin-top: 4em;
+  font-size: 0.8em;
+  color: #00000091;
+}
+
+.copyright a {
+  text-decoration: inherit;
+  color: #4f1eb8;
 }

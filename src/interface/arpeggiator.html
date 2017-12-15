@@ -1,3 +1,4 @@
+<div class="groove">Groove</div>
 <div class="component">
     <div>
         <div class="style">{{arpeggios[styleIndex % arpeggios.length].name}}</div>
@@ -5,14 +6,6 @@
             <div class="button" on:click="set({styleIndex: (styleIndex + arpeggios.length - 1) % arpeggios.length})">&lt;</div>
             <div class="button" on:click="set({styleIndex: (styleIndex + 1) % arpeggios.length})">&gt;</div>
         </div>
-    </div>
-    <div>
-      <span class="title">Preview</span>
-      <div class="button">M</div>
-      <div class="button">m</div>
-      <div class="button">M7</div>
-      <div class="button">m7</div>
-      <div class="button">dim7</div>
     </div>
     <div class="arpeggiator">
       <table cellspacing="0" cellpadding="2">
@@ -154,9 +147,9 @@
 
   .component {
     width: 300px;
-    border: solid 1px blue;
-    margin: 0px auto;
-    background: #071d77;
+    border: solid 1px #C2ADED;
+    margin: 0px 0 0 3em;
+    background: #4F1DB8;
     border-radius: 5px;
     box-shadow: 0 0 2px #4043ad;
     padding: 0.5em;
@@ -170,7 +163,7 @@
     padding: 0em 0.4em;
     background: #0000004f;
     border: none;
-    color: #4764dd;
+    color: #C2ADED;
     user-select: none;
   }
 
@@ -186,7 +179,7 @@
 
   .style {
     font-family: monospace;
-    color: #4765de;
+    color: #C2ADED;
     background: #00000066;
     font-size: 1.3em;
     margin: 0em 0.1em 0.3em 0.1em;
@@ -194,5 +187,16 @@
     border-radius: 2px;
     width: 200px;
     display: inline-block;
+  }
+
+  .groove {
+    margin-left: 3em;
+    margin-bottom: 1em;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 1em;
+    color: #4f1eb8;
+    margin-top: 0.5em;
+    letter-spacing: 2px;
   }
 </style>

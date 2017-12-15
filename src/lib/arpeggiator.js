@@ -36,9 +36,13 @@ export class Arpeggiator {
    *     ./patterns.js for examples.
    * @param {!Chord} chord The chord to arpeggiate.
    * @param {number=} beatsPerStep The number of beats per arpeggiation step.
+   * @param {number=} startOffset The starting offset for the arpeggiator.
+   * @param {?number=} cutOff If true, the cut off for the arpeggiator.
+   * @param {number=} offDelta The delta to release notes early.
+   * @param {number=} defaultOctaveShift The default octave jump.
    */
   constructor(pattern, chord, beatsPerStep = 1, startOffset = 0, cutOff = null,
-      offDelta = 0.1) {
+      offDelta = 0.1, defaultOctaveShift = -2) {
     /** @type {{number: !Array<number>}} */
     this.pattern = pattern;
     /** @type {!Chord} */
@@ -47,6 +51,8 @@ export class Arpeggiator {
     this.beatsPerStep = beatsPerStep;
     /** @type {number} */
     this.offDelta = offDelta;
+    /** @type {number} */
+    this.defaultOctaveShift = defaultOctaveShift;
 
     this.length = this.pattern[0][2].length;
     this.startOffset = startOffset / this.beatsPerStep;
@@ -63,7 +69,8 @@ export class Arpeggiator {
     const notesOn = new Map();
     for (const [n, shift, pattern] of this.pattern) {
       // Iterate through each chord tone.
-      const note = this.chord.getN(n).octaveShift(shift);
+      const note = this.chord.getN(n).octaveShift(
+          shift + this.defaultOctaveShift);
       const name = `${n},${shift}`;
 
       const handleArpeggiationEvent = (event, i) => {

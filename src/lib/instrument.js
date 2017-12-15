@@ -117,7 +117,7 @@ export class Instrument {
     this.gainNode = this.context.createGain();
 
     // Set the gain value to 0 and connect it to the output.
-    this.gainNode.gain.value = 0.0;
+    this.gainNode.gain.setValueAtTime(0.0, 0);
 
     // Wire the output to the context destination.
     this.wire_();
@@ -163,7 +163,7 @@ export class Instrument {
    */
   attack_(volume) {
     this.gainNode.gain.cancelScheduledValues(0);
-    this.gainNode.gain.value = volume;
+    this.gainNode.gain.setValueAtTime(volume, 0);
   }
 
   /**
@@ -176,7 +176,7 @@ export class Instrument {
    * The release part of the envelope. Can be overridden in subclasses.
    */
   release_() {
-    this.gainNode.gain.value = 0.0;
+    this.gainNode.gain.setValueAtTime(0.0, 0);
   }
 }
 
@@ -207,6 +207,9 @@ export class OscillatorInstrument extends Instrument {
     this.oscillator.type = this.oscillatorType;
     this.oscillator.connect(this.gainNode);
     this.oscillator.start(0);
+    try {
+      this.oscillator.noteOn(0);
+    } catch (_) {}
   }
 
   changeFrequency_(freq) {
@@ -254,6 +257,9 @@ export class MultipleOscillatorInstrument extends Instrument {
       oscillator.type = oscillatorType;
       oscillator.connect(this.gainNode);
       oscillator.start(0);
+      try {
+        oscillator.noteOn(0);
+      } catch (_) {}
       this.oscillators.push(oscillator);
     }
   }
@@ -291,17 +297,17 @@ export class BounceSynth extends MultipleOscillatorInstrument {
   wire_() {
     const biquadFilter = this.context.createBiquadFilter();
     biquadFilter.type = 'lowpass';
-    biquadFilter.frequency.value = 800;
+    biquadFilter.frequency.setValueAtTime(800, 0);
 
     const compressor = this.context.createDynamicsCompressor();
-    compressor.threshold.value = 0;
-    compressor.knee.value = 0;
-    compressor.ratio.value = 20;
-    compressor.attack.value = 0.005;
-    compressor.release.value = 0.05;
+    compressor.threshold.setValueAtTime(0, 0);
+    compressor.knee.setValueAtTime(0, 0);
+    compressor.ratio.setValueAtTime(20, 0);
+    compressor.attack.setValueAtTime(0.005, 0);
+    compressor.release.setValueAtTime(0.05, 0);
 
     const preGain = this.context.createGain();
-    preGain.gain.value = 0.5;
+    preGain.gain.setValueAtTime(0.5, 0);
     this.gainNode.connect(biquadFilter);
     biquadFilter.connect(preGain);
     preGain.connect(compressor);

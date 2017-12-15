@@ -118,6 +118,12 @@ export class Scheduler {
     this.startTime = null;
 
     /**
+     * The start offset for the scheduler, when it starts playing.
+     * @type {number}
+     */
+    this.startOffset = 0;
+
+    /**
      * The number of beats to offset the stream.
      * @type {number}
      */
@@ -129,9 +135,28 @@ export class Scheduler {
      */
     this.timers = [];
 
+    /**
+     * A timer for automatically pausing at the end.
+     * @type {!Timer}
+     */
     this.autoPauseTimer = new Timer(() => {
       this.pause();
+      this.beatOffset = 0;
     });
+
+    /**
+     * A timer for constantly emitting the beat offset at specified intervals.
+     * Set using setBeatOffsetCallback().
+     * @type {?Timer}
+     */
+    this.beatOffsetTimer = null;
+
+    /**
+     * A callback function to call every time the beat offset is changed. Set
+     * using setBeatOffsetCallback().
+     * @type {?Function}
+     */
+    this.beatOffsetCallback = null;
   }
 
   /**
@@ -145,22 +170,9 @@ export class Scheduler {
     this.schedule.addGroup(new Group(groupOrEvent, beatOffset));
   }
 
-  // addTimedNotes(timedNotes, staveNote, polyInstrument) {
-  //   if (timedNotes.length == 0) return;
-  //   const groups = new Group(
-  //       timedNotes.map((timedNote) => timedNote.toGroup(polyInstrument)));
-  //   const start = timedNotes[0].start;
-  //   const end = timedNotes[0].end;
-
-  //   staveNote.setClickPlayback(new Group(
-  //     timedNotes.map((timedNote) => timedNote.toGroup(polyInstrument, true))),
-  //     this.timing, polyInstrument);
-
-  //   groups.addEvent(new FunctionEvent(() => staveNote.showPlaying(), start));
-  //   groups.addEvent(new FunctionEvent(() => staveNote.showNormal(), end));
-  //   this.schedule.addGroup(new Group(groups));
-  // }
-
+  /**
+   * Initializes the scheduler by creating all timers.
+   */
   initialize() {
     this.clearTimers();
     for (const event of this.schedule.iterate()) {
@@ -169,9 +181,15 @@ export class Scheduler {
     }
   }
 
+  /**
+   * Plays the scheduler, optionally looping.
+   * @param {?number=} loop If non-null, playback will loop after the specified
+   *     number of beats.
+   */
   play(loop = null) {
     this.playing = true;
     this.startTime = Date.now();
+    this.startOffset = this.beatOffset;
 
     let maxMillis = 0;
     for (const timer of this.timers) {
@@ -186,26 +204,74 @@ export class Scheduler {
     this.autoPauseTimer.setTimeout(maxMillis);
   }
 
-  pause() {
-    this.playing = false;
+  /**
+   * Updates the beat offset for the scheduler.
+   */
+  updateBeatOffset() {
+    if (!this.playing) return;
     const offset = Date.now() - this.startTime;
-    const beatOffset = this.timing.getBeats(offset);
+    this.beatOffset = this.timing.getBeats(offset) + this.startOffset;
+  }
+
+  /**
+   * Pauses the scheduler.
+   */
+  pause() {
+    this.updateBeatOffset();
+    this.playing = false;
     for (const timer of this.timers) timer.clearTimeout();
     this.autoPauseTimer.clearTimeout();
   }
 
+  /**
+   * Clears all the timers but does not erase them.
+   */
   clearTimers() {
     for (const timer of this.timers) timer.clearTimeout();
     this.autoPauseTimer.clearTimeout();
     this.timers.splice(0);
   }
 
+  /**
+   * Clears all the timers and erases them.
+   */
   clear() {
     this.clearTimers();
     // Reset some of the vars.
     this.schedule = new Group();
     this.playing = false;
     this.timers = [];
+  }
+
+  /**
+   * Sets the beat offset, emitting the beat offset callback function if it's
+   * set.
+   * @param {number} beatOffset The beat offset to set.
+   */
+  setBeatOffset(beatOffset) {
+    const wasPlaying = this.playing;
+    if (this.playing) this.pause();
+    this.beatOffset = beatOffset;
+    if (this.beatOffsetCallback != null) {
+      this.beatOffsetCallback(this.beatOffset);
+    }
+    if (wasPlaying) this.play();
+  }
+
+  /**
+   * Sets a callback function that will constantly get called with the current
+   * beat offset.
+   * @param {!Function} callback A callback function that will be called with
+   *     the beat offset.
+   * @param {number} interval How frequently to poll for updates.
+   */
+  setBeatOffsetCallback(callback, interval = 50) {
+    this.beatOffsetCallback = callback;
+    this.beatOffsetTimer = new Timer(() => {
+      this.updateBeatOffset();
+      if (this.playing) this.beatOffsetCallback(this.beatOffset);
+    }, this.timing.getBeats(interval));
+    this.beatOffsetTimer.setTimeout(interval, interval);
   }
 }
 
@@ -328,8 +394,9 @@ export class Group {
    *     this group.
    * @param {number=} beatOffset The beat offset to add to every member of this
    *     group.
+   * @param {string} name A special name for the group.
    */
-  constructor(eventsOrGroups, beatOffset = 0) {
+  constructor(eventsOrGroups, beatOffset = 0, name) {
     /**
      * The events to run within the group.
      * @type {!Array<!Events>}
@@ -340,6 +407,8 @@ export class Group {
      * @type {!Array<!Group>}
      */
     this.subgroups = [];
+    /** @type {string} */
+    this.name = name;
 
     /**
      * The beat offset.
@@ -396,6 +465,20 @@ export class Group {
    */
   setOffset(offset) {
     this.beatOffset = offset;
+  }
+
+  /**
+   * Removes the specified sub-groups from this group by name, recursively
+   * trickling down the groups.
+   * @param {string} name The name of the sub-groups to remove.
+   */
+  removeGroupByName(name) {
+    for (let i = 0; i < this.subgroups.length; i++) {
+      if (this.subgroups[i].name == name) this.subgroups.splice(i, 1);
+    }
+    for (const subgroup of this.subgroups) {
+      subgroup.removeGroupByName(name);
+    }
   }
 
   /**
