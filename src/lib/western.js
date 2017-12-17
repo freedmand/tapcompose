@@ -63,6 +63,9 @@ export const harmonicMinorScale = new ChordTemplate(
 export const dominantScale = new ChordTemplate(
   Interval.P1(), Interval.M2(), Interval.M3(), Interval.P4(), Interval.P5(),
   Interval.M6(), Interval.m7());
+export const mixolydianMelodicMinor = new ChordTemplate(
+  Interval.P1(), Interval.M2(), Interval.M3(), Interval.P4(), Interval.P5(),
+  Interval.m6(), Interval.m7());
 
 
 // Key signature contexts.
@@ -101,8 +104,10 @@ export const minorContext = [
 export const extendedContext = [
   new ContextualChordTemplate(Interval.P1(), minor          , minorScale),
   new ContextualChordTemplate(Interval.P1(), minor7         , minorScale),
-  new ContextualChordTemplate(Interval.P1(), major          , dominantScale),
-  new ContextualChordTemplate(Interval.P1(), dominant7      , dominantScale),
+  new ContextualChordTemplate(Interval.P1(), major          ,
+                              mixolydianMelodicMinor),
+  new ContextualChordTemplate(Interval.P1(), dominant7      ,
+                              mixolydianMelodicMinor),
   new ContextualChordTemplate(Interval.P4(), minor          , minorScale),
   new ContextualChordTemplate(Interval.P4(), minor7         , minorScale),
   new ContextualChordTemplate(Interval.P5(), major          ,

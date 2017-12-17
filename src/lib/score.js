@@ -530,11 +530,12 @@ export class TapComposeScore extends Listenable {
     this.acceptedBars = -1;
 
     if (serializedScore != null) {
-      // try {
+      try {
         this.deserialize(serializedScore);
-      // } catch (_) {
-      //   console.error('Deserialization failed');
-      // }
+      } catch (e) {
+        console.error('Deserialization failed');
+        console.error(e);
+      }
     }
     if (this.acceptedBars < 0) {
       // Shuffle if its a new score.

@@ -6,6 +6,7 @@
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
+    "babel-plugin-external-helpers": "^6.22.0",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.6.1",
@@ -23,17 +24,31 @@
     "source-map-support": "^0.5.0"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c && npm run && npm run postbuild",
+    "postbuild": "npm run copybuild && npm run cleanprod && npm run removemaps",
+    "copybuild": "rm -rf dist/* && cp -r public/ dist/",
+    "cleanprod": "rm dist/*.map",
+    "removemaps": "sed -i '' -e '/\\/\\/# sourceMappingURL.*/d' dist/bundle.js && sed -i '' -e '/\\/\\*# sourceMappingURL.*/d' dist/bundle.css",
     "dev": "serve public & rollup -c -w",
     "start": "serve public",
     "test": "ava"
   },
   "babel": {
     "presets": [
-      "@ava/stage-4"
+      [
+        "env",
+        {
+          "modules": false
+        }
+      ]
     ],
-    "sourceMaps": true,
-    "retainLines": true
+    "plugins": [
+      "external-helpers",
+      ["transform-runtime", {
+        "polyfill": false,
+        "regenerator": true
+      }]
+    ]
   },
   "ava": {
     "files": [
@@ -45,6 +60,12 @@
       "babel-register",
       "babel-polyfill"
     ],
-    "babel": "inherit"
+    "babel": {
+      "presets": [
+        "@ava/stage-4"
+      ],
+      "sourceMaps": true,
+      "retainLines": true
+    }
   }
 }

@@ -1,0 +1,106 @@
+<head>
+  <title>tapcompose</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<div class="tapcompose"><img src="pictures/tapcompose.svg"></div>
+<p><a href="https://www.tapcompose.com">tapcompose</a></p>
+<p>Tapcompose is autocomplete for music composition. It is a browser-based tool that allows you to write a musical score with chords and a melody bar by bar, where the last bar is auto-suggested.</p>
+<p>Quick links:</p>
+<ul>
+<li><a href="https://www.tapcompose.com">tapcompose</a>: implementation website</li>
+<li><a href="https://github.com/freedmand/tapcompose">GitHub</a>: source code</li>
+</ul>
+<p><iframe width="560" height="315" src="https://www.youtube.com/embed/gpfXgbw9xFk?rel=0?ecver=1" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe></p>
+<h2 id="design">Design</h2>
+<p>I initially conceived of tapcompose as a tool that would utilize artificial intelligence to construct a melody and chords bar by bar. Per the advice of my music and computer design instructor Ge Wang, I emphasized building a good interface that would bridge an imperfect AI with an intentioned human.</p>
+<p>I ended up building a really good interface for taking automatically suggested notes and chords, playing them back, editing them, and accepting them to advance the score. In the end, I realized that a dummy interface that only gave random suggestions within the bounds of a simple song in Western music was good enough given the level of control the interface affords the user.</p>
+<p>For now, I have decided to keep the primary suggestion intelligence entirely AI-free, providing completely random suggestions. Combined with human judgment, the tool allows the user to iterate quickly on random ideas and keep or modify the ones that stick.</p>
+<p>The design and code is well-documented, modular, and open source and is aimed to eventually support other suggesting modules, harmonic systems, and polyphonic melody.</p>
+<p>
+  <div class="screenshots">
+    <img src="pictures/current/full_score.png">
+    <img src="pictures/current/score.png">
+  </div>
+</p>
+
+<h3 id="autocomplete">Autocomplete</h3>
+<p>I conceived of the automatic suggestions to be akin to composing a text message on a smartphone. Instead of autocompleting words, tapcompose autocompletes musical bars with melody and chords. Unlike smartphone autocomplete, the interface allows the user to quickly iterate through different suggestions, providing auditory feedback in realtime.</p>
+<h3 id="score-interface">Score Interface</h3>
+<p>The tapcompose score interface is heavily inspired by Sibelius, a proprietary music engraving program. I borrowed the notions of hearing the note as you click it, being able to use the arrow keys to change the note and shift to adjacent notes with live audio feedback, and seeing a vertical playback cursor that indicates the playback position.</p>
+<p>I believe I have simplified the interface from Sibelius a little by only keeping track of a selected note while the score is not playing. Selecting a note moves the playhead to that note. In Sibelius, the selected note and playhead can be disparate, which I think complicates things.</p>
+<p>
+  <div class="screenshots">
+    <img src="pictures/score/score1.png">
+    <img src="pictures/score/score2.png">
+  </div>
+</p>
+<h3 id="an-online-tool">An online tool</h3>
+<p>I designed tapcompose to run in a modern frontend browser without any dependencies, in order for it to be easy to universally create and share pieces created with the tool. The entire frontend after minification comes to less than 300kB, which is relatively small and snappy by modern standards.</p>
+<p>The beauty of tapcompose&#39;s notation is owed to <a href="http://www.vexflow.com/">Vexflow</a>, an open-source music engraving library written in JavaScript.</p>
+<h3 id="mobile">Mobile</h3>
+<p>While not yet implemented, the mobile interface for tapcompose is prototyped in detail. I plan to make tapcompose work for smartphones after ironing out all the bugs related to WebAudio playback on mobile. The mobile interface will feature contextual buttons that appear depending on the mode and provide direction on what to do.</p>
+<p>The main interface will provide a &quot;shuffle&quot; and &quot;accept&quot; button for controlling the suggester. A fine-tuning interface will allow individual notes to be manipulated.</p>
+<p>
+  <div class="screenshots">
+    <img class="mobile" src="pictures/mobile/mobile1.png">
+    <img class="mobile" src="pictures/mobile/mobile2.png">
+    <img class="mobile" src="pictures/mobile/mobile3.png">
+  </div>
+</p>
+<h3 id="name">Name</h3>
+<p>I chose the name &quot;tapcompose&quot; because it seemed to indicate a really seamless way of composing music. Also the .com URL was available.</p>
+<p>I generated the name using a character-level recurrent neural network trained on hundreds of thousands of startup names. By training and running the network backwards, I was able to generate names ending in &quot;compose&quot; and found &quot;tapcompose&quot; among the first results. (But more on that tool another time.)</p>
+<p>Iterations on the logo design:</p>
+<p>
+  <div class="screenshots">
+    <img class="logo" src="pictures/logo/logo1.png">
+    <img class="logo" src="pictures/logo/logo2.png">
+  </div>
+</p>
+<h2 id="implementation-details">Implementation Details</h2>
+<p>The abstractions of tapcompose are designed to encapsulate a wide range of possible musical behavior and support future work.</p>
+<h3 id="instruments">Instruments</h3>
+<p>Instruments are polyphonic and provide two methods:</p>
+<ul>
+<li>a noteOn call that takes a handle and a frequency</li>
+<li>a noteOff call that take a handle</li>
+</ul>
+<p>The handle is an arbitrary string that can be used to reference the note later to turn it off. For instance, the frequency 440Hz could be played under the handle <code>A4</code>. To stop playing the note, the noteOff method would be called with handle <code>A4</code>.</p>
+<p>Instruments are initialized with the desired degree of polyphony. The base instrument class is extensible and several subclasses are implemented that use the WebAudio API to generate pitched noises. The main composition interface should eventually allow toggling between different instruments.</p>
+<h3 id="notes">Notes</h3>
+<p>Notes are implemented in {2,3}-space, which was taught to me by <a href="https://www.seas.harvard.edu/directory/bethchen">Beth Chen</a>. This is a 2-dimensional coordinate space in which the x-axis corresponds to increments of an octave (1st overtone) and the y-axis corresponds to increments of an octave-and-a-fifth (2nd overtone). Coordinate (0,0) is set to D at octave 0.</p>
+<p>With the power of these musical building blocks, any note can be represented as a pair of integers. This space allows notes to be calculated in a cohesive mathematical system. An interval can be applied to any note, and it can be calculated with relatively simple modular arithmetic.</p>
+<p>The advantage of this coordinate space is it does not treat pitch as a linear semitone -- in {2,3}-space C#0 and Db0 are two separate notes. This allows the system to more accurately represent a system of music theory.</p>
+<h3 id="contextual-chords">Contextual Chords</h3>
+<p>Contextual chords are chords, or an array of notes, that carry a name, a scale degree, and an appropriate scale for melodies over the chord. As an example, a dominant V (five) chord in a minor key will have a scale degree of 5, a name of<br>&#39;7&#39;, and a harmonic minor scale starting on the 1. The scale corresponds to notes that are sensible to play over the chord in a given key signature.</p>
+<p>An entire musical context can be represented by constructing lists of chords, their scale degrees, names, and scales. The suggester can pick one of these contextual chords at random and use the scale information to sample the melody notes.</p>
+<h3 id="arpeggiation">Arpeggiation</h3>
+<p>Arpeggiation patterns define the groove that is played for each chord. An arpeggiation pattern is specified in a step sequencer fashion, as a 2-dimensional grid. Each column corresponds to a time step, and each row corresponds to a particular chord degree and octave shift.</p>
+<p>For instance, a C major chord may contain notes <code>C2</code>, <code>E2</code>, <code>G2</code>. The chord degree 0 would correspond to <code>C2</code>, 1 to <code>E2</code>, and 2 to <code>G2</code>. The degrees wrap around and shift octaves, so a degree of 3 would be <code>C3</code> and -1 <code>G1</code>. In each row, chord degree and octave shift can both be specified.</p>
+<p>These patterns are highly configurable and can work for chords with different amounts of notes. For instance, if you only wanted the root and final chord degree to play in an arpeggio, you could have the first row correspond to chord degree 0 and octave shift 0, and the second row correspond to chord degree -1 and octave shift 1.</p>
+<p>
+  <div class="screenshots">
+    <img src="pictures/arpeggiation/arpeggiator.png">
+    <img src="pictures/arpeggiation/arpeggiator_old.png">
+  </div>
+</p>
+<h3 id="schedulers">Schedulers</h3>
+<p>To play notes and chords with a strict sense of time, schedulers are used. Schedulers store hierarchical groups of notes that can be played at different beat offsets. Schedulers keep track of tempo and translate from time offsets to beats.</p>
+<p>A scheduler provides methods to play(), pause(), and set the beat offset. The interface is abstract enough to schedule any function to be called at the specified beat offset. Groups of notes can be converted into a performance group, which specifies an instrument and creates events that call the instrument&#39;s noteOn and noteOff methods to play the piece.</p>
+<h3 id="suggesters">Suggesters</h3>
+<p>Suggesters are abstract interfaces that, at a base level, suggest certain probabilistic outcomes. Suggesters provide methods for advancing the suggestion and accessing the entire history of past accepted suggestions. The base suggesters in tapcompose generate random chords within a musical key signature, random rhythms from a simple set, and random melodies that are in key.</p>
+<p>The suggester interface is designed to be extensible. Each suggester outcome is a probability distribution -- in the current implementation, the chosen note is always given 100%. In future work, an artificial intelligence algorithm could return the entire probability distribution it used for each note, each chord, each rhythm, etc. The suggester would keep track of this distribution. The probability information could be revealed to the user in some way to guide the compositional process.</p>
+<h3 id="score">Score</h3>
+<p>The process of going from a group of notes to a rendered score is detailed and passes through several phases:</p>
+<ul>
+<li>the notes are converted to the minimum number of voices required, where a voice is a sequential, non-overlapping line of notes and rests</li>
+<li>the voices are segmented by bar</li>
+<li>the bar-aligned voices are rendered by Vexflow, the JavaScript score engraving library</li>
+<li>the rendered notes are linked within a tapcompose score object to their underlying representations and endowed with dynamic functionality</li>
+</ul>
+<p>The tapcompose score object keeps track of a lot of things at once, links all the aforementioned interfaces together cohesively, rerenders as needed, and provides methods to serialize and deserialize the result.</p>
+<h3 id="mobile-compatibility">Mobile compatibility</h3>
+<p>While tapcompose is not yet ready for mobile, I have dealt with some WebAudio inconsistencies by providing a compatibility class that wraps a WebAudio context and goes through some hackery to make it work on mobile.</p>
+<p>Specifically on an iPhone, a WebAudio context cannot be created unless in response to a touch event. In order to play sounds while an iPhone is muted, an audio element has to have played. To this end, an empty clip is played both with WebAudio and HTML audio in response to a touch event, and the audio context is released only after both these conditions are met. To keep the context from periodically being suspended, which happens on iPhone, a recurring callback renews the context at frequent intervals.</p>

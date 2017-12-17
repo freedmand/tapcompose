@@ -106,9 +106,9 @@ export class CompatibleAudioContext extends Listenable {
     this.tearDown();
 
     // Set an interval timer to continually renew a suspended audio context.
-    setInterval(() => {
-      if (this.audioContext.state == 'suspended') this.audioContext.resume();
-    }, RESUME_CHECK_INTERVAL);
+    // setInterval(() => {
+    //   if (this.audioContext.state == 'suspended') this.audioContext.resume();
+    // }, RESUME_CHECK_INTERVAL);
 
     // Finally, call the callback with the initialized audio context!
     this.callback(this.audioContext);

@@ -1,3 +1,4 @@
+import babel from 'rollup-plugin-babel';
 import buble from 'rollup-plugin-buble';
 import commonjs from 'rollup-plugin-commonjs';
 import resolve from 'rollup-plugin-node-resolve';
@@ -9,7 +10,7 @@ const production = !process.env.ROLLUP_WATCH;
 export default {
   input: 'src/lib/driver.js',
   output: {
-    sourcemap: true,
+    sourcemap: !production,
     format: 'iife',
     file: 'public/bundle.js'
   },
@@ -38,6 +39,7 @@ export default {
 
     // If we're building for production (npm run build
     // instead of npm run dev), transpile and minify
+    production && babel({ exclude: 'node_modules/**' , runtimeHelpers: true }),
     production && buble({ exclude: 'node_modules/**' }),
     production && uglify()
   ]

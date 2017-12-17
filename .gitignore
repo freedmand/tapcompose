@@ -5,4 +5,4 @@ package-lock.json
 node_modules
 .vscode
 test
-public/bundle.*
+public
