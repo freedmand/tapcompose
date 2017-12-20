@@ -69,8 +69,8 @@ export class Arpeggiator {
     const notesOn = new Map();
     for (const [n, shift, pattern] of this.pattern) {
       // Iterate through each chord tone.
-      const note = this.chord.getN(n).octaveShift(
-          shift + this.defaultOctaveShift);
+      const note =
+          this.chord.getN(n).octaveShift(shift + this.defaultOctaveShift);
       const name = `${n},${shift}`;
 
       const handleArpeggiationEvent = (event, i) => {

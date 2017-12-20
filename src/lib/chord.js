@@ -3,7 +3,7 @@ import {Interval, Note} from './note.js';
 import {NoteGroup} from './timing.js';
 
 // A regular expression to detach a note name from a chord name.
-const NOTE_SPLIT_REGEX = /([a-gA-G]b*#*-?[0-9]*)(.*)/;
+const NOTE_SPLIT_REGEX = /([a-gA-G]b*#*-?[0-9]*)-(.*)/;
 
 /**
  * A ChordTemplate contains the intervals that make up a given chord. The chord
@@ -94,6 +94,8 @@ export class NamedChordTemplate {
     return new NamedChord(
       this.chordTemplate.apply(baseNote),
       `${baseNote.noteLetter}${baseNoteAccidentals}${this.suffix}`,
+      baseNote,
+      this.suffix,
     );
   }
 }
@@ -104,11 +106,20 @@ export class NamedChordTemplate {
 export class NamedChord {
   /**
    * @param {!Chord} chord The chord.
-   * @param {string} name The name of the chord.
+   * @param {string} name The full name of the chord, without specifying octave
+   *     information.
+   * @param {!Note} baseNote The base note of the chord.
+   * @param {string} suffix The suffix of the chord.
    */
-  constructor(chord, name) {
+  constructor(chord, name, baseNote, suffix) {
+    /** @type {!Chord} */
     this.chord = chord;
+    /** @type {string} */
     this.name = name;
+    /** @type {!Note} */
+    this.baseNote = baseNote;
+    /** @type {string} */
+    this.suffix = suffix;
   }
 }
 

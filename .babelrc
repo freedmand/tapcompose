@@ -1,0 +1,28 @@
+{
+  "env": {
+    "dev": {
+      "presets": [
+        [
+          "env",
+          {
+            "modules": false
+          }
+        ]
+      ],
+      "plugins": [
+        "external-helpers",
+        ["transform-runtime", {
+          "polyfill": false,
+          "regenerator": true
+        }]
+      ]
+     },
+    "test": {
+      "presets": [
+        "@ava/stage-4"
+      ],
+      "sourceMaps": true,
+      "retainLines": true
+    }
+  }
+}

@@ -96,14 +96,14 @@ test('Contextual Chord Off Interval', (t) => {
 });
 
 test('Get Chord By Name', (t) => {
-  const chord1 = westernChordDictionary.getChordByName('D5');
+  const chord1 = westernChordDictionary.getChordByName('D5-');
   t.is(chord1.name, 'D');
   t.is(chord1.chord.notes.length, 3);
   t.is(chord1.chord.notes[0].note, 'D5');
   t.is(chord1.chord.notes[1].note, 'F#5');
   t.is(chord1.chord.notes[2].note, 'A6');
 
-  const chord2 = westernChordDictionary.getChordByName('Bb-3maj7');
+  const chord2 = westernChordDictionary.getChordByName('Bb-3-maj7');
   t.is(chord2.name, 'Bbmaj7');
   t.is(chord2.chord.notes.length, 4);
   t.is(chord2.chord.notes[0].note, 'Bb-3');
@@ -111,14 +111,14 @@ test('Get Chord By Name', (t) => {
   t.is(chord2.chord.notes[2].note, 'F-3');
   t.is(chord2.chord.notes[3].note, 'A-2');
 
-  const chord3 = westernChordDictionary.getChordByName('B###2aug');
+  const chord3 = westernChordDictionary.getChordByName('B###2-aug');
   t.is(chord3.name, 'B###aug');
   t.is(chord3.chord.notes.length, 3);
   t.is(chord3.chord.notes[0].note, 'B###2');
   t.is(chord3.chord.notes[1].note, 'D####2');
   t.is(chord3.chord.notes[2].note, 'F#####2');
 
-  const chord4 = westernChordDictionary.getChordByName('F21dim');
+  const chord4 = westernChordDictionary.getChordByName('F21-dim');
   t.is(chord4.name, 'Fdim');
   t.is(chord4.chord.notes.length, 3);
   t.is(chord4.chord.notes[0].note, 'F21');

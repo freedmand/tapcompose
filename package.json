@@ -24,31 +24,14 @@
     "source-map-support": "^0.5.0"
   },
   "scripts": {
-    "build": "rollup -c && npm run && npm run postbuild",
+    "build": "BABEL_ENV=dev rollup -c && npm run && npm run postbuild",
     "postbuild": "npm run copybuild && npm run cleanprod && npm run removemaps",
     "copybuild": "rm -rf dist/* && cp -r public/ dist/",
     "cleanprod": "rm dist/*.map",
     "removemaps": "sed -i '' -e '/\\/\\/# sourceMappingURL.*/d' dist/bundle.js && sed -i '' -e '/\\/\\*# sourceMappingURL.*/d' dist/bundle.css",
-    "dev": "serve public & rollup -c -w",
+    "dev": "BABEL_ENV=dev serve public & rollup -c -w",
     "start": "serve public",
-    "test": "ava"
-  },
-  "babel": {
-    "presets": [
-      [
-        "env",
-        {
-          "modules": false
-        }
-      ]
-    ],
-    "plugins": [
-      "external-helpers",
-      ["transform-runtime", {
-        "polyfill": false,
-        "regenerator": true
-      }]
-    ]
+    "test": "BABEL_ENV=test ava"
   },
   "ava": {
     "files": [
@@ -60,12 +43,6 @@
       "babel-register",
       "babel-polyfill"
     ],
-    "babel": {
-      "presets": [
-        "@ava/stage-4"
-      ],
-      "sourceMaps": true,
-      "retainLines": true
-    }
+    "babel": "inherit"
   }
 }

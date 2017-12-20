@@ -152,6 +152,14 @@ export class Suggester {
   }
 
   /**
+   * Clears the suggester's history and resets the accept index.
+   */
+  clear() {
+    this.history = [];
+    this.acceptIndex = 0;
+  }
+
+  /**
    * Adds the specified outcome to the history and returns it.
    * @param {!Outcome} outcome The specified outcome.
    * @return {!Outcome} The specified outcome.

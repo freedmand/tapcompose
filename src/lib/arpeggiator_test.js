@@ -28,12 +28,13 @@ test('Arpeggiator', (t) => {
   const arpeggiator = new Arpeggiator(
     WATERFALL,
     new Chord(
-      new Note('C2'),
-      new Note('E2'),
-      new Note('G2'),
+      new Note('C4'),
+      new Note('E4'),
+      new Note('G4'),
     ),
   );
 
+  // Assume a default octave shift of -2.
   assertNoteGroupEquals(t, arpeggiator.toNoteGroup(), new NoteGroup([
     new TimedNote(new Note('C2'), 0, 8),
     new TimedNote(new Note('E2'), 1, 2),

@@ -10,6 +10,7 @@ import {BasicMelodyBarSuggester} from './suggest.js';
 import {CompatibleAudioContext} from './compatibility.js';
 import {ScoreRenderer} from './render.js';
 import {TapComposeScore} from './score.js';
+import {scoreSerializerDictionary} from './score_serializer.js';
 
 const arpeggioApp = new ArpeggiatorInterface({
   target: document.getElementById('arpeggiator'),
@@ -33,11 +34,13 @@ new CompatibleAudioContext((audioContext) => {
 
   let serializedScore = null;
   if (location.hash.trim() != '') {
-    serializedScore = location.hash.trim().replace('#', '').replace('_', '#');
+    // Replace the first hash with nothing.
+    serializedScore = location.hash.trim().replace('#', '');
   }
 
   const score = new TapComposeScore(scoreRenderer, scheduler, polyInstrument,
-      arpeggioApp, suggester, westernChordDictionary, serializedScore);
+      arpeggioApp, suggester, westernChordDictionary, scoreSerializerDictionary,
+      serializedScore);
 
   score.render();
 });
